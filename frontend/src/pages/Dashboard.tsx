@@ -363,12 +363,19 @@ export default function Dashboard() {
                     <Bell size={14} />
                   </div>
                   <div className='min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-slate-100 break-words leading-relaxed'>{act.message}</p>
+                    <div className='flex items-center justify-between'>
+                      <p className='text-sm font-medium text-slate-100 break-words leading-relaxed'>{act.message}</p>
+                    </div>
                     <div className='flex items-center space-x-2 mt-1.5 text-xs text-slate-400'>
                       <span className='font-bold uppercase tracking-wider text-indigo-400 text-[10px] bg-indigo-400/5 px-2 py-0.5 rounded'>{act.module}</span>
                       <span>•</span>
-                      {/* Acceptance Criteria: dynamic listings show relative time formats without page breakages */}
-                      <span className="font-medium text-slate-400">{getRelativeTime(act.createdAt || act.timestamp)}</span>
+                      <span className="font-medium text-slate-400">{getRelativeTime(act.createdAt || (act as any).timestamp)}</span>
+                      {(act as any).actor && (
+                        <>
+                          <span>•</span>
+                          <span className="text-emerald-400 font-semibold italic">By: {(act as any).actor}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

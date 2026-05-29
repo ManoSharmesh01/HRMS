@@ -47,6 +47,7 @@ model Activity {
   message   String
   module    String
   type      String
+  actor     String? 
   createdAt DateTime @default(now())
 }
 
