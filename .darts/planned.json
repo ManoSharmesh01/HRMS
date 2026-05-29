@@ -16,8 +16,8 @@
       "ui_task_id": 41,
       "files": [],
       "created_at": "2026-05-29T07:34:25.443Z",
-      "updated_at": "2026-05-29T07:58:34.477Z",
-      "completed_at": "2026-05-29T07:58:34.477Z"
+      "updated_at": "2026-05-29T08:17:55.672Z",
+      "completed_at": "2026-05-29T08:17:55.672Z"
     },
     {
       "id": 2,
@@ -35,8 +35,8 @@
       "ui_task_id": 41,
       "files": [],
       "created_at": "2026-05-29T07:34:25.443Z",
-      "updated_at": "2026-05-29T07:58:34.484Z",
-      "completed_at": "2026-05-29T07:58:34.484Z"
+      "updated_at": "2026-05-29T08:17:55.678Z",
+      "completed_at": "2026-05-29T08:17:55.678Z"
     },
     {
       "id": 3,
@@ -54,8 +54,8 @@
       "ui_task_id": 42,
       "files": [],
       "created_at": "2026-05-29T07:52:07.301Z",
-      "updated_at": "2026-05-29T07:58:34.492Z",
-      "completed_at": "2026-05-29T07:58:34.492Z"
+      "updated_at": "2026-05-29T08:17:55.683Z",
+      "completed_at": "2026-05-29T08:17:55.683Z"
     },
     {
       "id": 4,
@@ -73,8 +73,8 @@
       "ui_task_id": 43,
       "files": [],
       "created_at": "2026-05-29T07:58:34.467Z",
-      "updated_at": "2026-05-29T07:58:34.499Z",
-      "completed_at": "2026-05-29T07:58:34.499Z"
+      "updated_at": "2026-05-29T08:17:55.688Z",
+      "completed_at": "2026-05-29T08:17:55.688Z"
     },
     {
       "id": 5,
@@ -92,8 +92,8 @@
       "ui_task_id": 43,
       "files": [],
       "created_at": "2026-05-29T07:58:34.467Z",
-      "updated_at": "2026-05-29T07:58:34.507Z",
-      "completed_at": "2026-05-29T07:58:34.507Z"
+      "updated_at": "2026-05-29T08:17:55.695Z",
+      "completed_at": "2026-05-29T08:17:55.695Z"
     },
     {
       "id": 6,
@@ -113,15 +113,53 @@
       "created_at": "2026-05-29T07:58:34.467Z",
       "updated_at": "2026-05-29T07:58:34.514Z",
       "completed_at": "2026-05-29T07:58:34.514Z"
+    },
+    {
+      "id": 7,
+      "task_id": "T-001",
+      "module": "PlannerCoder",
+      "feature": "Create dynamic CRUD REST APIs for administration and orga...",
+      "task": "Implement Employee CRUD API",
+      "description": "Implement Employee CRUD API",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 44,
+      "files": [],
+      "created_at": "2026-05-29T08:17:55.666Z",
+      "updated_at": "2026-05-29T08:17:55.699Z",
+      "completed_at": "2026-05-29T08:17:55.699Z"
+    },
+    {
+      "id": 8,
+      "task_id": "T-002",
+      "module": "PlannerCoder",
+      "feature": "Create dynamic CRUD REST APIs for administration and orga...",
+      "task": "Entry points routing registration",
+      "description": "Entry points routing registration",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 44,
+      "files": [],
+      "created_at": "2026-05-29T08:17:55.666Z",
+      "updated_at": "2026-05-29T08:17:55.704Z",
+      "completed_at": "2026-05-29T08:17:55.704Z"
     }
   ],
   "metadata": {
     "source": "mixed",
     "target_framework": "ReactJS Backend Express JS",
     "gap_summary": "",
-    "total_tasks": 6,
+    "total_tasks": 8,
     "created_at": "2026-05-29T07:32:36.221Z",
-    "last_updated": "2026-05-29T07:58:34.514Z"
+    "last_updated": "2026-05-29T08:17:55.704Z"
   },
-  "last_updated": "2026-05-29T07:58:34.514Z"
+  "last_updated": "2026-05-29T08:17:55.704Z"
 }

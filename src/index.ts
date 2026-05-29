@@ -68,7 +68,7 @@ async function seedDefaultData() {
     }
   } catch (error) {
     console.error('Error during automatic database seeding:', error);
-  }
+  } 
 }
 
 // Trigger Seed
@@ -133,7 +133,8 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const existing = await prisma.employee.findUnique({ where: { email } });
+    const trimmedEmail = email.trim().toLowerCase();
+    const existing = await prisma.employee.findUnique({ where: { email: trimmedEmail } });
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -141,11 +142,11 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const employee = await prisma.employee.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: trimmedEmail,
         password: hashedPassword,
-        role,
-        department,
+        role: role.trim().toUpperCase(),
+        department: department.trim(),
         salary: salary ? parseFloat(salary) : 0,
         status: status || 'ACTIVE',
       }
@@ -174,7 +175,8 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const employee = await prisma.employee.findUnique({ where: { email } });
+    const trimmedEmail = email.trim().toLowerCase();
+    const employee = await prisma.employee.findUnique({ where: { email: trimmedEmail } });
     if (!employee) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -239,7 +241,28 @@ app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res
 // Employee Management API (requires authentication)
 app.get('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthenticatedRequest, res) => {
   try {
+    const { role, department, status, search } = req.query;
+    
+    const whereClause: any = {};
+    
+    if (role) {
+      whereClause.role = String(role).trim().toUpperCase();
+    }
+    if (department) {
+      whereClause.department = String(department).trim();
+    }
+    if (status) {
+      whereClause.status = String(status).trim();
+    }
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: String(search) } },
+        { email: { contains: String(search) } }
+      ];
+    }
+
     const employees = await prisma.employee.findMany({
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -251,6 +274,194 @@ app.get('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANA
       }
     });
     res.json(employees);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { name, email, password, role, department, salary, status } = req.body;
+    
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ error: 'Name is required and must be a valid string' });
+    }
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'A valid email is required' });
+    }
+    if (!role || typeof role !== 'string' || role.trim() === '') {
+      return res.status(400).json({ error: 'Role is required and must be a valid string' });
+    }
+    if (!department || typeof department !== 'string' || department.trim() === '') {
+      return res.status(400).json({ error: 'Department is required and must be a valid string' });
+    }
+
+    // Check duplicate email
+    const existing = await prisma.employee.findUnique({
+      where: { email: email.trim().toLowerCase() }
+    });
+    if (existing) {
+      return res.status(400).json({ error: 'Email is already in use' });
+    }
+
+    const defaultPassword = password ? String(password) : 'welcome123';
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+    const employee = await prisma.employee.create({
+      data: {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: hashedPassword,
+        role: role.trim().toUpperCase(),
+        department: department.trim(),
+        salary: salary ? parseFloat(salary) : 0,
+        status: status || 'ACTIVE',
+      }
+    });
+
+    // Log Activity
+    await prisma.activity.create({
+      data: {
+        message: `Registered new employee card: ${employee.name} (${employee.role})`,
+        module: 'EMPLOYEE',
+        type: 'INFO'
+      }
+    });
+
+    const { password: _, ...employeeWithoutPassword } = employee;
+    res.status(201).json(employeeWithoutPassword);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/employees/:id', authenticateToken, authorizeRoles('ADMIN', 'HR'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const { department, role, status, email, name, salary } = req.body;
+
+    const existingEmployee = await prisma.employee.findUnique({
+      where: { id }
+    });
+
+    if (!existingEmployee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    const updateData: any = {};
+
+    if (department !== undefined) {
+      if (typeof department !== 'string' || department.trim() === '') {
+        return res.status(400).json({ error: 'Department must be a non-empty string' });
+      }
+      updateData.department = department.trim();
+    }
+
+    if (role !== undefined) {
+      if (typeof role !== 'string' || role.trim() === '') {
+        return res.status(400).json({ error: 'Role must be a non-empty string' });
+      }
+      updateData.role = role.trim().toUpperCase();
+    }
+
+    if (status !== undefined) {
+      if (typeof status !== 'string' || status.trim() === '') {
+        return res.status(400).json({ error: 'Status must be a non-empty string' });
+      }
+      updateData.status = status.trim();
+    }
+
+    if (email !== undefined) {
+      if (typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ error: 'A valid email is required' });
+      }
+      const trimmedEmail = email.trim().toLowerCase();
+      if (trimmedEmail !== existingEmployee.email) {
+        // Check duplicate email
+        const duplicate = await prisma.employee.findUnique({
+          where: { email: trimmedEmail }
+        });
+        if (duplicate) {
+          return res.status(400).json({ error: 'Email is already in use by another employee' });
+        }
+        updateData.email = trimmedEmail;
+      }
+    }
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ error: 'Name must be a non-empty string' });
+      }
+      updateData.name = name.trim();
+    }
+
+    if (salary !== undefined) {
+      const parsedSalary = parseFloat(salary);
+      if (isNaN(parsedSalary)) {
+        return res.status(400).json({ error: 'Salary must be a valid number' });
+      }
+      updateData.salary = parsedSalary;
+    }
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: updateData
+    });
+
+    await prisma.activity.create({
+      data: {
+        message: `Updated employee ID ${id}: ${Object.keys(updateData).join(', ')}`,
+        module: 'EMPLOYEE',
+        type: 'INFO'
+      }
+    });
+
+    const { password: _, ...employeeWithoutPassword } = updated;
+    res.json(employeeWithoutPassword);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/employees/:id', authenticateToken, authorizeRoles('ADMIN'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid employee ID' });
+    }
+
+    const existingEmployee = await prisma.employee.findUnique({
+      where: { id }
+    });
+
+    if (!existingEmployee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    // Perform cascade operations explicitly to ensure reliability
+    await prisma.$transaction([
+      prisma.attendance.deleteMany({ where: { employeeId: id } }),
+      prisma.leave.deleteMany({ where: { employeeId: id } }),
+      prisma.employee.delete({ where: { id } })
+    ]);
+
+    await prisma.activity.create({
+      data: {
+        message: `Deleted employee card: ${existingEmployee.name} (ID: ${id})`,
+        module: 'EMPLOYEE',
+        type: 'INFO'
+      }
+    });
+
+    const { password: _, ...employeeWithoutPassword } = existingEmployee;
+    res.json({
+      message: 'Employee record and all related records deleted successfully',
+      employee: employeeWithoutPassword
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -269,7 +480,7 @@ app.post('/api/attendance/checkin', authenticateToken, async (req: Authenticated
     const existing = await prisma.attendance.findFirst({
       where: {
         employeeId,
-        date: { 
+        date: {
           gte: todayStart
         },
         checkOut: null
@@ -383,12 +594,21 @@ app.post('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid start or end date format' });
+    }
+    if (start > end) {
+      return res.status(400).json({ error: 'Start date cannot be after end date' });
+    }
+
     const leave = await prisma.leave.create({
       data: {
         employeeId,
         type,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        startDate: start,
+        endDate: end,
         reason,
         status: 'PENDING'
       }
@@ -436,13 +656,25 @@ app.get('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res)
 app.put('/api/leaves/:id', authenticateToken, authorizeRoles('ADMIN'), async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
+    const leaveId = parseInt(id);
+    if (isNaN(leaveId)) {
+      return res.status(400).json({ error: 'Invalid leave ID' });
+    }
+
     const { status } = req.body;
     if (!status || !['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
       return res.status(400).json({ error: 'Invalid leave status' });
     }
 
+    const existingLeave = await prisma.leave.findUnique({
+      where: { id: leaveId }
+    });
+    if (!existingLeave) {
+      return res.status(404).json({ error: 'Leave request not found' });
+    }
+
     const updated = await prisma.leave.update({
-      where: { id: parseInt(id) },
+      where: { id: leaveId },
       data: { status }
     });
 
@@ -492,10 +724,15 @@ app.post('/api/events', authenticateToken, authorizeRoles('ADMIN'), async (req: 
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const eventDate = new Date(date);
+    if (isNaN(eventDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+
     const event = await prisma.event.create({
       data: {
         title,
-        date: new Date(date),
+        date: eventDate,
         type
       }
     });
