@@ -6,7 +6,8 @@ import {
   LogOut,
   X,
   Activity,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,6 +21,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Employees', path: '/employees', icon: Users },
   ];
 
   const handleLogout = () => {
