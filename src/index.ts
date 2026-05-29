@@ -468,6 +468,153 @@ app.delete('/api/employees/:id', authenticateToken, authorizeRoles('ADMIN'), asy
 });
 
 // Attendance API
+
+// New Attendance Operations API
+app.post('/api/attendance/check-in', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const employeeId = req.user?.id;
+    if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Check if already checked in today and has not checked out yet
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const existing = await prisma.attendance.findFirst({
+      where: {
+        employeeId,
+        date: {
+          gte: todayStart
+        },
+        checkOut: null
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Already checked in today' });
+    }
+
+    const checkInTime = new Date();
+    const hours = checkInTime.getHours();
+    const minutes = checkInTime.getMinutes();
+    let status = 'Present';
+    if (hours > 9 || (hours === 9 && minutes > 0)) {
+      status = 'Late';
+    }
+
+    const attendance = await prisma.attendance.create({
+      data: {
+        employeeId,
+        checkIn: checkInTime,
+        status: status
+      }
+    });
+
+    await prisma.activity.create({
+      data: {
+        message: `Employee ID ${employeeId} checked in at ${checkInTime.toLocaleTimeString()} (Status: ${status})`,
+        module: 'ATTENDANCE',
+        type: 'INFO'
+      }
+    });
+
+    res.status(201).json(attendance);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/attendance/check-out', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const employeeId = req.user?.id;
+    if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const activeRecord = await prisma.attendance.findFirst({
+      where: {
+        employeeId,
+        checkOut: null
+      },
+      orderBy: {
+        checkIn: 'desc'
+      }
+    });
+
+    if (!activeRecord) {
+      return res.status(400).json({ error: 'No active check-in found' });
+    }
+
+    const checkOutTime = new Date();
+    const durationMs = checkOutTime.getTime() - new Date(activeRecord.checkIn).getTime();
+    const totalHours = Math.round((durationMs / (1000 * 60 * 60)) * 100) / 100;
+
+    const updated = await prisma.attendance.update({
+      where: { id: activeRecord.id },
+      data: {
+        checkOut: checkOutTime,
+        totalHours
+      }
+    });
+
+    await prisma.activity.create({
+      data: {
+        message: `Employee ID ${employeeId} checked out. Worked ${totalHours} hours`,
+        module: 'ATTENDANCE',
+        type: 'INFO'
+      }
+    });
+
+    res.json(updated);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/attendance/today', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const employeeId = req.user?.id;
+    if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayRecord = await prisma.attendance.findFirst({
+      where: {
+        employeeId,
+        date: {
+          gte: todayStart
+        }
+      },
+      orderBy: {
+        checkIn: 'desc'
+      }
+    });
+
+    res.json({
+      checkedIn: todayRecord ? true : false,
+      checkedOut: todayRecord && todayRecord.checkOut ? true : false,
+      record: todayRecord || null
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/attendance/history', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const employeeId = req.user?.id;
+    if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const records = await prisma.attendance.findMany({
+      where: { employeeId },
+      orderBy: { checkIn: 'desc' }
+    });
+
+    res.json(records);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Attendance API
 app.post('/api/attendance/checkin', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const employeeId = req.user?.id;
