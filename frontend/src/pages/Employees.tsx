@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useDebounce } from '../hooks/useDebounce';
+import { exportToCSV } from '../utils/csvUtils';
 import {
   Plus,
   Search,
@@ -22,7 +23,8 @@ import {
   MapPin,
   Calendar,
   CheckCircle,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 
 interface Employee {
@@ -110,6 +112,19 @@ export default function Employees() {
 
   const employees = employeeData?.data || [];
   const total = employeeData?.total || 0;
+
+  const handleExport = () => {
+    const headers = [
+      { label: 'ID', key: 'id' },
+      { label: 'Name', key: 'name' },
+      { label: 'Email', key: 'email' },
+      { label: 'Department', key: 'department' },
+      { label: 'Role', key: 'role' },
+      { label: 'Salary', key: 'salary' },
+      { label: 'Status', key: 'status' }
+    ];
+    exportToCSV(employees, headers, 'Employee_Data');
+  };
 
   // Mutate create
   const createMutation = useMutation({
@@ -319,15 +334,24 @@ export default function Employees() {
           </p>
         </div>
 
-        {canModify && (
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleAddClick}
-            className="flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white glass-button shrink-0"
+            onClick={handleExport}
+            className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
           >
-            <Plus size={18} className="mr-2" />
-            Add Employee
+            <Download size={18} className="mr-2" />
+            Export CSV
           </button>
-        )}
+          {canModify && (
+            <button
+              onClick={handleAddClick}
+              className="flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white glass-button shrink-0"
+            >
+              <Plus size={18} className="mr-2" />
+              Add Employee
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters Panel */}
@@ -500,22 +524,20 @@ export default function Employees() {
                       >
                         <Eye size={16} />
                       </button>
-
                       {canModify && (
                         <button
                           onClick={() => handleEditClick(emp)}
-                          title="Edit Profile"
+                          title="Edit Employee"
                           className="p-2 text-slate-400 hover:text-amber-400 hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/5 inline-flex items-center"
                         >
                           <Edit size={16} />
                         </button>
                       )}
-
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteClick(emp.id)}
                           title="Delete Employee"
-                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/5 inline-flex items-center"
+                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/5 inline-flex items-center"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -527,101 +549,99 @@ export default function Employees() {
             </table>
           </div>
 
-          {/* Grid View (for mobile / tablet screens) */}
-          <div className="lg:hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Grid View (for smaller screens) */}
+          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-px bg-white/5">
             {employees.map((emp) => (
-              <div
-                key={emp.id}
-                className="p-5 rounded-xl border border-white/5 bg-slate-900/30 hover:border-indigo-500/30 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
-                        {emp.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white text-base">{emp.name}</h4>
-                        <span className="text-xs font-semibold text-slate-400">#EMP{String(emp.id).padStart(3, '0')}</span>
-                      </div>
+              <div key={emp.id} className="p-6 bg-slate-900 flex flex-col space-y-4 hover:bg-slate-800/80 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-12 w-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
+                      {emp.name.charAt(0)}
                     </div>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(emp.status)}`}>
-                      {emp.status}
+                    <div>
+                      <h4 className="font-bold text-white">{emp.name}</h4>
+                      <p className="text-xs text-slate-400">{emp.email}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
+                    {emp.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</p>
+                    <p className="text-sm text-slate-300">{emp.department}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role</p>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${getRoleBadgeStyle(emp.role)}`}>
+                      {emp.role}
                     </span>
                   </div>
-
-                  <div className="mt-4 space-y-2 text-sm text-slate-300">
-                    <p className="flex items-center text-xs text-slate-400">
-                      <Mail size={14} className="mr-2 text-slate-400 shrink-0" />
-                      <span className="truncate">{emp.email}</span>
-                    </p>
-                    <p className="flex items-center">
-                      <Briefcase size={14} className="mr-2 text-indigo-400 shrink-0" />
-                      <span>{emp.department}</span>
-                    </p>
-                    <p className="flex items-center">
-                      <Shield size={14} className="mr-2 text-amber-400 shrink-0" />
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getRoleBadgeStyle(emp.role)}`}>{emp.role}</span>
-                    </p>
-                    <p className="flex items-center">
-                      <DollarSign size={14} className="mr-2 text-emerald-400 shrink-0" />
-                      <span className="font-medium">${emp.salary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                    </p>
-                  </div>
                 </div>
-
-                <div className="mt-5 pt-3 border-t border-white/5 flex justify-end space-x-2">
-                  <button
-                    onClick={() => handleViewClick(emp)}
-                    className="px-3 py-1.5 rounded-lg border border-white/5 hover:border-white/10 text-xs text-slate-300 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5"
-                  >
-                    <Eye size={14} />
-                    View
-                  </button>
-
-                  {canModify && (
+                <div className="flex items-center justify-between pt-4">
+                  <p className="text-lg font-bold text-white">${emp.salary.toLocaleString()}</p>
+                  <div className="flex gap-1">
                     <button
-                      onClick={() => handleEditClick(emp)}
-                      className="px-3 py-1.5 rounded-lg border border-amber-500/10 hover:border-amber-500/20 text-xs text-amber-400 hover:bg-amber-500/10 transition-all flex items-center gap-1.5"
+                      onClick={() => handleViewClick(emp)}
+                      className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
                     >
-                      <Edit size={14} />
-                      Edit
+                      <Eye size={18} />
                     </button>
-                  )}
-
-                  {canDelete && (
-                    <button
-                      onClick={() => handleDeleteClick(emp.id)}
-                      className="px-3 py-1.5 rounded-lg border border-rose-500/10 hover:border-rose-500/20 text-xs text-rose-400 hover:bg-rose-500/10 transition-all flex items-center gap-1.5"
-                    >
-                      <Trash2 size={14} />
-                      Delete
-                    </button>
-                  )}
+                    {canModify && (
+                      <button
+                        onClick={() => handleEditClick(emp)}
+                        className="p-2 text-slate-400 hover:text-amber-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
+                      >
+                        <Edit size={18} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => handleDeleteClick(emp.id)}
+                        className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Pagination Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-950/20 border-t border-white/5 gap-4">
-            <p className="text-xs text-slate-400">
-              Showing <span className="font-semibold text-slate-200">{total === 0 ? 0 : (page - 1) * limit + 1}</span> to{' '}
-              <span className="font-semibold text-slate-200">{Math.min(page * limit, total)}</span> of{' '}
-              <span className="font-semibold text-slate-200">{total}</span> records
+          {/* Pagination Footer */}
+          <div className="px-6 py-4 bg-slate-950/20 border-t border-white/5 flex items-center justify-between">
+            <p className="text-xs text-slate-400 font-medium">
+              Showing <span className="text-slate-200">{employees.length}</span> of <span className="text-slate-200">{total}</span> staff profiles
             </p>
-            <div className="flex gap-2">
+            <div className="flex items-center space-x-2">
               <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/40 hover:bg-slate-900 text-slate-300 border border-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                disabled={page <= 1}
+                onClick={() => setPage(prev => prev - 1)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/5 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Previous
               </button>
+              <div className="flex items-center space-x-1 mx-2">
+                {Array.from({ length: Math.ceil(total / limit) }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPage(i + 1)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                      page === i + 1
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
               <button
-                onClick={() => setPage((prev) => Math.min(prev + 1, Math.ceil(total / limit)))}
                 disabled={page >= Math.ceil(total / limit)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/40 hover:bg-slate-900 text-slate-300 border border-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                onClick={() => setPage(prev => prev + 1)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/5 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Next
               </button>
@@ -630,106 +650,110 @@ export default function Employees() {
         </div>
       )}
 
-      {/* dialog modal for ADD or EDIT Employee */}
+      {/* Form Modal (Add/Edit) */}
       {isFormModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg rounded-2xl glass-panel relative border border-white/10 max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-                  <User size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slideUp">
+            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950/20">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <div className="p-2 bg-indigo-500/10 rounded-lg mr-3 text-indigo-400">
+                  {modalMode === 'add' ? <Plus size={20} /> : <Edit size={20} />}
                 </div>
-                <h3 className="text-xl font-bold text-white">
-                  {modalMode === 'add' ? 'Add Employee Profile' : 'Edit Employee Profile'}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsFormModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <X size={18} />
+                {modalMode === 'add' ? 'Onboard New Staff Member' : `Update Profile: ${selectedEmployee?.name}`}
+              </h3>
+              <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X size={24} />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* Full Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Full Name <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${errors.name ? 'border-rose-500/50 focus:border-rose-500' : ''}`}
-                  placeholder="e.g. Rachel Green"
-                />
-                {errors.name && (
-                  <p className="text-rose-400 text-xs mt-1.5 flex items-center">
-                    <AlertCircle size={12} className="mr-1 shrink-0" />
-                    {errors.name}
-                  </p>
-                )}
-              </div>
-
-              {/* Email Address */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                  Email Address <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${errors.email ? 'border-rose-500/50 focus:border-rose-500' : ''}`}
-                  placeholder="e.g. rachel.green@company.com"
-                />
-                {errors.email && (
-                  <p className="text-rose-400 text-xs mt-1.5 flex items-center">
-                    <AlertCircle size={12} className="mr-1 shrink-0" />
-                    {errors.email}
-                  </p>
-                )}
-              </div>
-
-              {/* Password (Only for Create Profile) */}
-              {modalMode === 'add' && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Password <span className="text-slate-400 text-[10px] lowercase">(Optional - defaults to 'welcome123')</span>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <User size={14} className="mr-1.5" /> Full Legal Name
                   </label>
                   <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
+                    type="text"
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${errors.password ? 'border-rose-500/50 focus:border-rose-500' : ''}`}
-                    placeholder="Enter customized password"
+                    placeholder="e.g. John Doe"
+                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
+                      errors.name ? 'border-rose-500/50 focus:border-rose-500' : ''
+                    }`}
                   />
-                  {errors.password && (
-                    <p className="text-rose-400 text-xs mt-1.5 flex items-center">
-                      <AlertCircle size={12} className="mr-1 shrink-0" />
-                      {errors.password}
-                    </p>
-                  )}
+                  {errors.name && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.name}</p>}
                 </div>
-              )}
 
-              {/* Department & Role Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Department <span className="text-rose-400">*</span>
+                {/* Email Address */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <Mail size={14} className="mr-1.5" /> Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="j.doe@company.com"
+                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
+                      errors.email ? 'border-rose-500/50 focus:border-rose-500' : ''
+                    }`}
+                  />
+                  {errors.email && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.email}</p>}
+                </div>
+
+                {/* Temporary Password (only for Add) */}
+                {modalMode === 'add' && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                      <Shield size={14} className="mr-1.5" /> Portal Password
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Minimum 6 characters"
+                      className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
+                        errors.password ? 'border-rose-500/50 focus:border-rose-500' : ''
+                      }`}
+                    />
+                    {errors.password && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.password}</p>}
+                    <p className="text-[10px] text-slate-500 italic">User can change this after first login.</p>
+                  </div>
+                )}
+
+                {/* System Role */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <Shield size={14} className="mr-1.5" /> Access Role
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
+                  >
+                    <option value="EMPLOYEE">EMPLOYEE</option>
+                    <option value="MANAGER">MANAGER</option>
+                    <option value="HR">HR</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                  {errors.role && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.role}</p>}
+                </div>
+
+                {/* Department */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <Briefcase size={14} className="mr-1.5" /> Department Unit
                   </label>
                   <select
                     name="department"
                     value={formData.department}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm glass-input"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
                   >
                     <option value="Engineering">Engineering</option>
                     <option value="Product">Product</option>
@@ -740,60 +764,37 @@ export default function Employees() {
                     <option value="Finance">Finance</option>
                     <option value="Operations">Operations</option>
                   </select>
+                  {errors.department && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.department}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Role <span className="text-rose-400">*</span>
+                {/* Salary */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <DollarSign size={14} className="mr-1.5" /> Annual Salary ($)
                   </label>
-                  <select
-                    name="role"
-                    value={formData.role}
+                  <input
+                    type="number"
+                    name="salary"
+                    value={formData.salary}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm glass-input"
-                  >
-                    <option value="EMPLOYEE">EMPLOYEE</option>
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="HR">HR</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Salary & Status Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Salary (USD) <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">$</span>
-                    <input
-                      type="number"
-                      name="salary"
-                      value={formData.salary}
-                      onChange={handleInputChange}
-                      className={`w-full pl-7 pr-4 py-2.5 rounded-xl text-sm glass-input ${errors.salary ? 'border-rose-500/50 focus:border-rose-500' : ''}`}
-                      placeholder="e.g. 75000"
-                    />
-                  </div>
-                  {errors.salary && (
-                    <p className="text-rose-400 text-xs mt-1.5 flex items-center">
-                      <AlertCircle size={12} className="mr-1 shrink-0" />
-                      {errors.salary}
-                    </p>
-                  )}
+                    placeholder="e.g. 85000"
+                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
+                      errors.salary ? 'border-rose-500/50 focus:border-rose-500' : ''
+                    }`}
+                  />
+                  {errors.salary && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.salary}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                    Status <span className="text-rose-400">*</span>
+                {/* Employment Status */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                    <Info size={14} className="mr-1.5" /> Account Status
                   </label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm glass-input"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
                   >
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="INACTIVE">INACTIVE</option>
@@ -801,24 +802,23 @@ export default function Employees() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-white/5 flex items-center justify-end space-x-3 shrink-0">
+              <div className="pt-4 border-t border-white/5 flex items-center justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setIsFormModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white border border-transparent hover:bg-white/5 transition-all"
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-colors hover:bg-white/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-semibold text-white glass-button disabled:opacity-50"
+                  className="px-8 py-2.5 rounded-xl text-sm font-bold text-white glass-button flex items-center disabled:opacity-50"
                 >
                   {(createMutation.isPending || updateMutation.isPending) && (
                     <Loader2 size={16} className="animate-spin mr-2" />
                   )}
-                  {modalMode === 'add' ? 'Save Profile' : 'Update Profile'}
+                  {modalMode === 'add' ? 'Execute Onboarding' : 'Save Profile Changes'}
                 </button>
               </div>
             </form>
@@ -826,115 +826,104 @@ export default function Employees() {
         </div>
       )}
 
-      {/* complete modal profile details */}
+      {/* Profile Detail View Modal */}
       {isProfileModalOpen && selectedEmployee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg rounded-2xl glass-panel relative border border-white/10 overflow-hidden">
-            {/* Upper Color Band representing role styling */}
-            <div className={`h-24 w-full bg-gradient-to-r ${
-              selectedEmployee.role.toUpperCase() === 'ADMIN'
-                ? 'from-rose-500/30 to-indigo-500/10'
-                : selectedEmployee.role.toUpperCase() === 'HR'
-                ? 'from-pink-500/30 to-indigo-500/10'
-                : selectedEmployee.role.toUpperCase() === 'MANAGER'
-                ? 'from-amber-500/30 to-indigo-500/10'
-                : 'from-indigo-600/30 to-indigo-500/10'
-            }`} />
-
-            {/* Profile Avatar & Primary Info */}
-            <div className="px-6 pb-6 relative">
-              <div className="absolute -top-12 left-6 h-20 w-20 rounded-2xl bg-slate-900 border-2 border-indigo-500 text-indigo-400 flex items-center justify-center font-bold text-3xl shadow-xl">
-                {selectedEmployee.name.charAt(0)}
-              </div>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scaleIn">
+            <div className="h-32 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
               <button
                 onClick={() => setIsProfileModalOpen(false)}
-                className="absolute top-4 right-6 p-1.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors border border-transparent"
+                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
-
-              <div className="pt-10">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <h3 className="text-2xl font-bold text-white">{selectedEmployee.name}</h3>
-                  <span className="text-xs font-semibold text-slate-400">#EMP{String(selectedEmployee.id).padStart(3, '0')}</span>
+              <div className="absolute -bottom-12 left-8 p-1.5 bg-slate-900 rounded-2xl border border-white/10">
+                <div className="h-24 w-24 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
+                  {selectedEmployee.name.charAt(0)}
                 </div>
-                <p className="text-sm text-slate-400 mt-1">{selectedEmployee.email}</p>
               </div>
+            </div>
 
-              {/* Badges Row */}
-              <div className="flex gap-2.5 mt-4 pt-4 border-t border-white/5">
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${getRoleBadgeStyle(selectedEmployee.role)}`}>
-                  <Shield size={12} className="mr-1.5" />
-                  {selectedEmployee.role}
-                </span>
-
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${getStatusBadgeStyle(selectedEmployee.status)}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${selectedEmployee.status.toUpperCase() === 'ACTIVE' ? 'bg-emerald-400' : 'bg-slate-400'}`} />
-                  {selectedEmployee.status}
-                </span>
-              </div>
-
-              {/* Comprehensive Metadata Profile Tabs */}
-              <div className="mt-6 space-y-4">
-                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Administrative Assignment</h4>
-                
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-white/5 bg-slate-950/20">
+            <div className="pt-16 px-8 pb-8 space-y-8">
+              <div>
+                <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase">Department</span>
-                    <p className="text-sm font-semibold text-white mt-0.5">{selectedEmployee.department}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase">Annual Salary</span>
-                    <p className="text-sm font-bold text-emerald-400 mt-0.5">
-                      ${selectedEmployee.salary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <h3 className="text-3xl font-black text-white tracking-tight">{selectedEmployee.name}</h3>
+                    <p className="text-indigo-400 font-bold flex items-center mt-1 uppercase tracking-widest text-xs">
+                      <Briefcase size={14} className="mr-1.5" /> {selectedEmployee.role} • {selectedEmployee.department}
                     </p>
                   </div>
-                </div>
-
-                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest pt-2">Simulated Metadata</h4>
-
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-slate-300">
-                    <Phone size={14} className="mr-3 text-slate-400 shrink-0" />
-                    <span>+1 (555) 019-2834</span>
-                  </div>
-                  <div className="flex items-center text-sm text-slate-300">
-                    <MapPin size={14} className="mr-3 text-slate-400 shrink-0" />
-                    <span>New York HQ, Room 402</span>
-                  </div>
-                  <div className="flex items-center text-sm text-slate-300">
-                    <Calendar size={14} className="mr-3 text-slate-400 shrink-0" />
-                    <span>Joined Dec 12, 2023 (Simulated)</span>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-indigo-500/5 rounded-xl border border-indigo-500/10 text-xs text-indigo-300/90 flex gap-2.5 items-start">
-                  <Info size={14} className="shrink-0 mt-0.5" />
-                  <p>
-                    All modifications to this employee's security credentials, check-in schedules, and leaves are logged under the global system audit log.
-                  </p>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadgeStyle(selectedEmployee.status)}`}>
+                    {selectedEmployee.status}
+                  </span>
                 </div>
               </div>
 
-              {/* Action Controls */}
-              <div className="mt-6 pt-4 border-t border-white/5 flex gap-3 justify-end">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Contact Intelligence</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-slate-300 group cursor-pointer">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
+                        <Mail size={16} />
+                      </div>
+                      <span className="text-sm font-medium">{selectedEmployee.email}</span>
+                    </div>
+                    <div className="flex items-center text-slate-300 group cursor-pointer">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
+                        <Phone size={16} />
+                      </div>
+                      <span className="text-sm font-medium">+1 (555) 012-3456</span>
+                    </div>
+                    <div className="flex items-center text-slate-300 group cursor-pointer">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
+                        <MapPin size={16} />
+                      </div>
+                      <span className="text-sm font-medium">San Francisco, CA HQ</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Employment Metrics</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-slate-300 group">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400">
+                        <DollarSign size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Annual Remuneration</p>
+                        <span className="text-sm font-bold text-white">${selectedEmployee.salary.toLocaleString()} USD</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-slate-300 group">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400">
+                        <Calendar size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Employment Since</p>
+                        <span className="text-sm font-bold text-white">January 12, 2023</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-white/5 flex justify-end gap-3">
                 <button
                   onClick={() => setIsProfileModalOpen(false)}
-                  className="px-5 py-2 text-sm font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5"
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all"
                 >
-                  Close
+                  Close Profile
                 </button>
-
                 {canModify && (
                   <button
                     onClick={() => {
                       setIsProfileModalOpen(false);
                       handleEditClick(selectedEmployee);
                     }}
-                    className="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all border border-indigo-500/30 flex items-center"
+                    className="px-6 py-2.5 rounded-xl text-sm font-bold text-white glass-button"
                   >
-                    <Edit size={14} className="mr-2" />
                     Edit Profile
                   </button>
                 )}
@@ -945,35 +934,29 @@ export default function Employees() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-2xl glass-panel relative border border-white/10 p-6 space-y-4">
-            <div className="flex items-start space-x-3.5">
-              <div className="p-3 bg-rose-500/10 rounded-xl text-rose-400 shrink-0">
-                <Trash2 size={22} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Decommission Employee Profile</h3>
-                <p className="text-sm text-slate-400 mt-1">
-                  Are you absolutely sure you want to permanently delete this employee? This will purge all associated attendance check-ins and leaves immediately. This action is irreversible.
-                </p>
-              </div>
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-md bg-slate-900 border border-rose-500/20 rounded-2xl shadow-2xl overflow-hidden p-6 text-center animate-slideUp">
+            <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
+              <Trash2 size={28} />
             </div>
-
-            <div className="flex items-center justify-end space-x-3 pt-2">
+            <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
+            <p className="text-sm text-slate-400 mt-2">
+              Are you sure you want to remove this staff profile? This action is irreversible and will revoke all system access immediately.
+            </p>
+            <div className="mt-8 flex items-center justify-center space-x-3">
               <button
-                disabled={isDeleting}
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-colors"
               >
-                Cancel
+                Keep Profile
               </button>
               <button
-                disabled={isDeleting}
                 onClick={confirmDelete}
-                className="px-5 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl transition-all border border-rose-500/20 flex items-center"
+                disabled={isDeleting}
+                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 flex items-center"
               >
-                {isDeleting && <Loader2 size={14} className="animate-spin mr-1.5" />}
+                {isDeleting && <Loader2 size={16} className="animate-spin mr-2" />}
                 Confirm Delete
               </button>
             </div>

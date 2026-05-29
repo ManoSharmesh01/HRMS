@@ -16,8 +16,8 @@
       "ui_task_id": 41,
       "files": [],
       "created_at": "2026-05-29T07:34:25.443Z",
-      "updated_at": "2026-05-29T11:03:31.011Z",
-      "completed_at": "2026-05-29T11:03:31.011Z"
+      "updated_at": "2026-05-29T11:15:18.533Z",
+      "completed_at": "2026-05-29T11:15:18.533Z"
     },
     {
       "id": 2,
@@ -35,8 +35,8 @@
       "ui_task_id": 41,
       "files": [],
       "created_at": "2026-05-29T07:34:25.443Z",
-      "updated_at": "2026-05-29T11:03:31.027Z",
-      "completed_at": "2026-05-29T11:03:31.027Z"
+      "updated_at": "2026-05-29T11:15:18.555Z",
+      "completed_at": "2026-05-29T11:15:18.555Z"
     },
     {
       "id": 3,
@@ -54,8 +54,8 @@
       "ui_task_id": 42,
       "files": [],
       "created_at": "2026-05-29T07:52:07.301Z",
-      "updated_at": "2026-05-29T11:03:31.045Z",
-      "completed_at": "2026-05-29T11:03:31.045Z"
+      "updated_at": "2026-05-29T11:15:18.575Z",
+      "completed_at": "2026-05-29T11:15:18.575Z"
     },
     {
       "id": 4,
@@ -73,8 +73,8 @@
       "ui_task_id": 43,
       "files": [],
       "created_at": "2026-05-29T07:58:34.467Z",
-      "updated_at": "2026-05-29T11:03:31.058Z",
-      "completed_at": "2026-05-29T11:03:31.059Z"
+      "updated_at": "2026-05-29T11:15:18.593Z",
+      "completed_at": "2026-05-29T11:15:18.593Z"
     },
     {
       "id": 5,
@@ -92,8 +92,8 @@
       "ui_task_id": 43,
       "files": [],
       "created_at": "2026-05-29T07:58:34.467Z",
-      "updated_at": "2026-05-29T11:03:31.077Z",
-      "completed_at": "2026-05-29T11:03:31.077Z"
+      "updated_at": "2026-05-29T11:15:18.606Z",
+      "completed_at": "2026-05-29T11:15:18.606Z"
     },
     {
       "id": 6,
@@ -130,8 +130,8 @@
       "ui_task_id": 44,
       "files": [],
       "created_at": "2026-05-29T08:17:55.666Z",
-      "updated_at": "2026-05-29T11:03:31.092Z",
-      "completed_at": "2026-05-29T11:03:31.092Z"
+      "updated_at": "2026-05-29T11:15:18.619Z",
+      "completed_at": "2026-05-29T11:15:18.619Z"
     },
     {
       "id": 8,
@@ -149,8 +149,8 @@
       "ui_task_id": 44,
       "files": [],
       "created_at": "2026-05-29T08:17:55.666Z",
-      "updated_at": "2026-05-29T11:03:31.110Z",
-      "completed_at": "2026-05-29T11:03:31.110Z"
+      "updated_at": "2026-05-29T11:15:18.632Z",
+      "completed_at": "2026-05-29T11:15:18.632Z"
     },
     {
       "id": 9,
@@ -168,8 +168,8 @@
       "ui_task_id": 45,
       "files": [],
       "created_at": "2026-05-29T08:27:17.448Z",
-      "updated_at": "2026-05-29T11:03:31.124Z",
-      "completed_at": "2026-05-29T11:03:31.124Z"
+      "updated_at": "2026-05-29T11:15:18.647Z",
+      "completed_at": "2026-05-29T11:15:18.647Z"
     },
     {
       "id": 10,
@@ -187,8 +187,8 @@
       "ui_task_id": 45,
       "files": [],
       "created_at": "2026-05-29T08:27:17.449Z",
-      "updated_at": "2026-05-29T11:03:31.138Z",
-      "completed_at": "2026-05-29T11:03:31.138Z"
+      "updated_at": "2026-05-29T11:15:18.661Z",
+      "completed_at": "2026-05-29T11:15:18.661Z"
     },
     {
       "id": 11,
@@ -206,8 +206,8 @@
       "ui_task_id": 46,
       "files": [],
       "created_at": "2026-05-29T08:34:54.477Z",
-      "updated_at": "2026-05-29T11:03:31.152Z",
-      "completed_at": "2026-05-29T11:03:31.152Z"
+      "updated_at": "2026-05-29T11:15:18.678Z",
+      "completed_at": "2026-05-29T11:15:18.678Z"
     },
     {
       "id": 12,
@@ -225,8 +225,8 @@
       "ui_task_id": 47,
       "files": [],
       "created_at": "2026-05-29T08:47:08.699Z",
-      "updated_at": "2026-05-29T11:03:31.166Z",
-      "completed_at": "2026-05-29T11:03:31.166Z"
+      "updated_at": "2026-05-29T11:15:18.696Z",
+      "completed_at": "2026-05-29T11:15:18.696Z"
     },
     {
       "id": 13,
@@ -244,8 +244,8 @@
       "ui_task_id": 47,
       "files": [],
       "created_at": "2026-05-29T08:47:08.699Z",
-      "updated_at": "2026-05-29T11:03:31.180Z",
-      "completed_at": "2026-05-29T11:03:31.180Z"
+      "updated_at": "2026-05-29T11:15:18.716Z",
+      "completed_at": "2026-05-29T11:15:18.716Z"
     },
     {
       "id": 14,
@@ -263,8 +263,8 @@
       "ui_task_id": 48,
       "files": [],
       "created_at": "2026-05-29T08:54:21.755Z",
-      "updated_at": "2026-05-29T11:03:31.195Z",
-      "completed_at": "2026-05-29T11:03:31.195Z"
+      "updated_at": "2026-05-29T11:15:18.738Z",
+      "completed_at": "2026-05-29T11:15:18.738Z"
     },
     {
       "id": 15,
@@ -282,8 +282,8 @@
       "ui_task_id": 48,
       "files": [],
       "created_at": "2026-05-29T08:54:21.755Z",
-      "updated_at": "2026-05-29T11:03:31.209Z",
-      "completed_at": "2026-05-29T11:03:31.209Z"
+      "updated_at": "2026-05-29T11:15:18.758Z",
+      "completed_at": "2026-05-29T11:15:18.758Z"
     },
     {
       "id": 16,
@@ -339,8 +339,8 @@
       "ui_task_id": 49,
       "files": [],
       "created_at": "2026-05-29T09:03:28.819Z",
-      "updated_at": "2026-05-29T11:03:31.224Z",
-      "completed_at": "2026-05-29T11:03:31.224Z"
+      "updated_at": "2026-05-29T11:15:18.777Z",
+      "completed_at": "2026-05-29T11:15:18.777Z"
     },
     {
       "id": 19,
@@ -358,8 +358,8 @@
       "ui_task_id": 49,
       "files": [],
       "created_at": "2026-05-29T09:03:28.819Z",
-      "updated_at": "2026-05-29T11:03:31.238Z",
-      "completed_at": "2026-05-29T11:03:31.238Z"
+      "updated_at": "2026-05-29T11:15:18.794Z",
+      "completed_at": "2026-05-29T11:15:18.794Z"
     },
     {
       "id": 20,
@@ -377,8 +377,8 @@
       "ui_task_id": 50,
       "files": [],
       "created_at": "2026-05-29T10:30:03.534Z",
-      "updated_at": "2026-05-29T11:03:31.252Z",
-      "completed_at": "2026-05-29T11:03:31.252Z"
+      "updated_at": "2026-05-29T11:15:18.814Z",
+      "completed_at": "2026-05-29T11:15:18.814Z"
     },
     {
       "id": 21,
@@ -396,8 +396,8 @@
       "ui_task_id": 50,
       "files": [],
       "created_at": "2026-05-29T10:30:03.534Z",
-      "updated_at": "2026-05-29T11:03:31.266Z",
-      "completed_at": "2026-05-29T11:03:31.266Z"
+      "updated_at": "2026-05-29T11:15:18.829Z",
+      "completed_at": "2026-05-29T11:15:18.829Z"
     },
     {
       "id": 22,
@@ -434,8 +434,8 @@
       "ui_task_id": 51,
       "files": [],
       "created_at": "2026-05-29T10:41:34.012Z",
-      "updated_at": "2026-05-29T11:03:31.280Z",
-      "completed_at": "2026-05-29T11:03:31.280Z"
+      "updated_at": "2026-05-29T11:15:18.843Z",
+      "completed_at": "2026-05-29T11:15:18.843Z"
     },
     {
       "id": 24,
@@ -453,8 +453,8 @@
       "ui_task_id": 51,
       "files": [],
       "created_at": "2026-05-29T10:41:34.012Z",
-      "updated_at": "2026-05-29T11:03:31.297Z",
-      "completed_at": "2026-05-29T11:03:31.297Z"
+      "updated_at": "2026-05-29T11:15:18.860Z",
+      "completed_at": "2026-05-29T11:15:18.860Z"
     },
     {
       "id": 25,
@@ -510,8 +510,8 @@
       "ui_task_id": 52,
       "files": [],
       "created_at": "2026-05-29T10:48:26.085Z",
-      "updated_at": "2026-05-29T11:03:31.312Z",
-      "completed_at": "2026-05-29T11:03:31.312Z"
+      "updated_at": "2026-05-29T11:15:18.872Z",
+      "completed_at": "2026-05-29T11:15:18.873Z"
     },
     {
       "id": 28,
@@ -529,8 +529,8 @@
       "ui_task_id": 52,
       "files": [],
       "created_at": "2026-05-29T10:48:26.085Z",
-      "updated_at": "2026-05-29T11:03:31.326Z",
-      "completed_at": "2026-05-29T11:03:31.326Z"
+      "updated_at": "2026-05-29T11:15:18.886Z",
+      "completed_at": "2026-05-29T11:15:18.886Z"
     },
     {
       "id": 29,
@@ -548,8 +548,8 @@
       "ui_task_id": 53,
       "files": [],
       "created_at": "2026-05-29T10:58:58.994Z",
-      "updated_at": "2026-05-29T11:03:31.343Z",
-      "completed_at": "2026-05-29T11:03:31.343Z"
+      "updated_at": "2026-05-29T11:15:18.901Z",
+      "completed_at": "2026-05-29T11:15:18.901Z"
     },
     {
       "id": 30,
@@ -567,8 +567,8 @@
       "ui_task_id": 53,
       "files": [],
       "created_at": "2026-05-29T10:58:58.994Z",
-      "updated_at": "2026-05-29T11:03:31.358Z",
-      "completed_at": "2026-05-29T11:03:31.358Z"
+      "updated_at": "2026-05-29T11:15:18.913Z",
+      "completed_at": "2026-05-29T11:15:18.913Z"
     },
     {
       "id": 31,
@@ -605,8 +605,8 @@
       "ui_task_id": 54,
       "files": [],
       "created_at": "2026-05-29T11:03:30.992Z",
-      "updated_at": "2026-05-29T11:03:31.375Z",
-      "completed_at": "2026-05-29T11:03:31.375Z"
+      "updated_at": "2026-05-29T11:15:18.925Z",
+      "completed_at": "2026-05-29T11:15:18.925Z"
     },
     {
       "id": 33,
@@ -624,8 +624,8 @@
       "ui_task_id": 54,
       "files": [],
       "created_at": "2026-05-29T11:03:30.992Z",
-      "updated_at": "2026-05-29T11:03:31.391Z",
-      "completed_at": "2026-05-29T11:03:31.391Z"
+      "updated_at": "2026-05-29T11:15:18.936Z",
+      "completed_at": "2026-05-29T11:15:18.936Z"
     },
     {
       "id": 34,
@@ -643,15 +643,53 @@
       "ui_task_id": 54,
       "files": [],
       "created_at": "2026-05-29T11:03:30.992Z"
+    },
+    {
+      "id": 35,
+      "task_id": "T-001",
+      "module": "PlannerCoder",
+      "feature": "Add client-side or backend-generated CSV compilation util...",
+      "task": "Frontend Utility",
+      "description": "Frontend Utility",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 55,
+      "files": [],
+      "created_at": "2026-05-29T11:15:18.516Z",
+      "updated_at": "2026-05-29T11:15:18.947Z",
+      "completed_at": "2026-05-29T11:15:18.947Z"
+    },
+    {
+      "id": 36,
+      "task_id": "T-002",
+      "module": "PlannerCoder",
+      "feature": "Add client-side or backend-generated CSV compilation util...",
+      "task": "Frontend UI Updates",
+      "description": "Frontend UI Updates",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 55,
+      "files": [],
+      "created_at": "2026-05-29T11:15:18.516Z",
+      "updated_at": "2026-05-29T11:15:18.962Z",
+      "completed_at": "2026-05-29T11:15:18.962Z"
     }
   ],
   "metadata": {
     "source": "mixed",
     "target_framework": "ReactJS Backend Express JS",
     "gap_summary": "",
-    "total_tasks": 34,
+    "total_tasks": 36,
     "created_at": "2026-05-29T07:32:36.221Z",
-    "last_updated": "2026-05-29T11:03:31.391Z"
+    "last_updated": "2026-05-29T11:15:18.962Z"
   },
-  "last_updated": "2026-05-29T11:03:31.391Z"
+  "last_updated": "2026-05-29T11:15:18.962Z"
 }

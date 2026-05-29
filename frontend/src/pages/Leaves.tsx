@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { exportToCSV } from '../utils/csvUtils';
 import {
   Calendar,
   Plus,
@@ -16,7 +17,8 @@ import {
   XCircle,
   HelpCircle,
   ClipboardList,
-  Sparkles
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 interface LeaveRequest {
@@ -207,6 +209,30 @@ export default function Leaves() {
     return matchesStatus && matchesType;
   });
 
+  const handleExport = () => {
+    const headers = [
+      { label: 'Employee Name', key: 'employee.name' },
+      { label: 'Department', key: 'employee.department' },
+      { label: 'Category', key: 'type' },
+      { label: 'Start Date', key: 'startDate' },
+      { label: 'End Date', key: 'endDate' },
+      { label: 'Days', key: 'days' },
+      { label: 'Reason', key: 'reason' },
+      { label: 'Status', key: 'status' }
+    ];
+
+    const formattedData = filteredLeaves.map(leave => ({
+      ...leave,
+      startDate: new Date(leave.startDate).toLocaleDateString(),
+      endDate: new Date(leave.endDate).toLocaleDateString(),
+      days: calculateDays(leave.startDate, leave.endDate),
+      'employee.name': leave.employee?.name || `Employee #${leave.employeeId}`,
+      'employee.department': leave.employee?.department || 'N/A'
+    }));
+
+    exportToCSV(formattedData, headers, 'Leave_Register');
+  };
+
   // Helpers for Status Badges
   const getStatusBadge = (status: string) => {
     const normalized = status.toUpperCase();
@@ -250,13 +276,22 @@ export default function Leaves() {
             Submit leave requests, check your allowances, and manage outstanding matrices.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 shrink-0 border border-indigo-500/30"
-        >
-          <Plus size={18} className="mr-2" />
-          Apply For Leave
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200 shrink-0"
+          >
+            <Download size={18} className="mr-2" />
+            Export CSV
+          </button>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 shrink-0 border border-indigo-500/30"
+          >
+            <Plus size={18} className="mr-2" />
+            Apply For Leave
+          </button>
+        </div>
       </div>
 
       {/* Balance Cards */}
@@ -492,12 +527,12 @@ export default function Leaves() {
               {/* Category selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Leave Category <span className="text-rose-400">*</span>
+                  Leave Category <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.category}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
                 >
                   <option value="Annual Leave">Annual Leave</option>
                   <option value="Sick Leave">Sick Leave</option>
@@ -508,75 +543,75 @@ export default function Leaves() {
                 </select>
               </div>
 
-              {/* Date pickers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Dates grid */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Start Date <span className="text-rose-400">*</span>
+                    Start Date <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
-                    required
                     value={formData.startDate}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    End Date <span className="text-rose-400">*</span>
+                    End Date <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="date"
-                    required
                     value={formData.endDate}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Reason / Justification */}
+              {/* Duration display */}
+              <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-between">
+                <div className="flex items-center text-xs text-indigo-300 font-medium">
+                  <Info size={14} className="mr-2 text-indigo-400" />
+                  Calculated Leave Duration
+                </div>
+                <span className="text-sm font-bold text-white">
+                  {calculateDays(formData.startDate, formData.endDate)} Working Days
+                </span>
+              </div>
+
+              {/* Justification */}
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Reason & Justification <span className="text-rose-400">*</span>
+                  Reason / Justification <span className="text-rose-500">*</span>
                 </label>
                 <textarea
-                  rows={4}
-                  required
-                  placeholder="Provide a reason for your leave request..."
+                  rows={3}
                   value={formData.justification}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, justification: e.target.value }))}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+                  placeholder="Please provide a brief reason for your leave request..."
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
                 />
               </div>
 
-              {/* Modal Footer */}
-              <div className="pt-4 border-t border-white/5 flex items-center justify-end space-x-3">
+              {/* Modal Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-white/5">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setValidationError(null);
-                  }}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createLeaveMutation.isPending}
-                  className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center"
                 >
-                  {createLeaveMutation.isPending ? (
-                    <>
-                      <Loader2 className="animate-spin mr-2" size={16} />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Request'
+                  {createLeaveMutation.isPending && (
+                    <Loader2 size={16} className="animate-spin mr-2" />
                   )}
+                  Submit Application
                 </button>
               </div>
             </form>

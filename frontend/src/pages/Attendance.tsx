@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import { exportToCSV } from '../utils/csvUtils';
 import {
   Clock,
   UserCheck,
@@ -14,7 +15,8 @@ import {
   Search,
   Filter,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 interface AttendanceRecord {
@@ -194,6 +196,26 @@ export default function Attendance() {
     return true;
   });
 
+  const handleExport = () => {
+    const headers = [
+      { label: 'Date', key: 'date' },
+      { label: 'Check In', key: 'checkIn' },
+      { label: 'Check Out', key: 'checkOut' },
+      { label: 'Status', key: 'status' },
+      { label: 'Total Hours', key: 'totalHours' }
+    ];
+
+    const formattedData = filteredHistory.map(record => ({
+      ...record,
+      date: new Date(record.date).toLocaleDateString(),
+      checkIn: new Date(record.checkIn).toLocaleTimeString(),
+      checkOut: record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : 'Active',
+      totalHours: record.totalHours ?? '--'
+    }));
+
+    exportToCSV(formattedData, headers, 'Attendance_History');
+  };
+
   // Compute metrics from history
   const totalDays = historyData?.length || 0;
   const lateDays = historyData?.filter((r) => r.status?.toUpperCase() === 'LATE').length || 0;
@@ -221,13 +243,22 @@ export default function Attendance() {
           </p>
         </div>
 
-        <button
-          onClick={forceRefetch}
-          className="flex items-center justify-center self-start md:self-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
-        >
-          <RefreshCw size={14} className="mr-2" />
-          Refresh Stats
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExport}
+            className="flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
+          >
+            <Download size={14} className="mr-2" />
+            Export Logs
+          </button>
+          <button
+            onClick={forceRefetch}
+            className="flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
+          >
+            <RefreshCw size={14} className="mr-2" />
+            Refresh Stats
+          </button>
+        </div>
       </div>
 
       {/* Notifications banner */}
@@ -461,161 +492,106 @@ export default function Attendance() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Search Input */}
             <div className="relative">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search history..."
+                placeholder="Search by date or status..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 rounded-xl text-xs bg-slate-950/50 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-44 transition-all duration-200"
+                className="pl-9 pr-4 py-2 bg-slate-950/40 border border-white/10 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
               />
             </div>
 
-            {/* Filter Dropdown */}
-            <div className="flex items-center space-x-2">
-              <Filter size={14} className="text-slate-400" />
+            {/* Filter Select */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-950/40 border border-white/10 rounded-xl">
+              <Filter size={12} className="text-slate-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl text-xs bg-slate-950/50 border border-white/10 text-white focus:outline-none focus:border-indigo-500 transition-all duration-200"
+                className="bg-transparent text-xs text-slate-300 focus:outline-none cursor-pointer"
               >
-                <option value="ALL">All Statuses</option>
-                <option value="PRESENT">On Time</option>
-                <option value="LATE">Late</option>
+                <option value="ALL" className="bg-slate-900">All Statuses</option>
+                <option value="PRESENT" className="bg-slate-900">Present</option>
+                <option value="LATE" className="bg-slate-900">Late</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* History Grid (Chronological Table) */}
+        {/* Table View */}
         <div className="overflow-x-auto">
           {historyLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-              <p className="text-slate-400 text-sm mt-3 font-medium">Retrieving history logs...</p>
+            <div className="py-20 flex flex-col items-center justify-center">
+              <RefreshCw className="animate-spin text-indigo-400 mb-3" size={24} />
+              <p className="text-xs text-slate-500">Fetching your records...</p>
             </div>
           ) : filteredHistory.length === 0 ? (
-            <div className="text-center py-16 rounded-xl border border-dashed border-white/5 bg-slate-950/10">
-              <History size={40} className="mx-auto text-slate-600 mb-3" />
-              <p className="text-slate-400 font-semibold text-sm">No historical log records matching filters</p>
-              <p className="text-xs text-slate-500 mt-1">Try resetting your status filters or search parameters.</p>
+            <div className="py-20 flex flex-col items-center justify-center text-center">
+              <History size={40} className="text-slate-700 mb-3" />
+              <p className="text-sm font-semibold text-slate-400">No history records found</p>
+              <p className="text-xs text-slate-600 mt-1">Try adjusting your filters or search query.</p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-white/5 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-4">Clock In</th>
-                  <th className="py-3.5 px-4">Clock Out</th>
-                  <th className="py-3.5 px-4">Duration</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
+                <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  <th className="pb-4 px-4">Date</th>
+                  <th className="pb-4 px-4 text-center">Clock In</th>
+                  <th className="pb-4 px-4 text-center">Clock Out</th>
+                  <th className="pb-4 px-4 text-center">Duration</th>
+                  <th className="pb-4 px-4 text-right">Work Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-slate-300 text-sm">
-                {filteredHistory.map((record) => {
-                  const checkInDate = new Date(record.checkIn);
-                  const isLate = record.status?.toUpperCase() === 'LATE';
-
-                  return (
-                    <tr
-                      key={record.id}
-                      className="hover:bg-white/5 transition-colors duration-150"
-                    >
-                      {/* Date */}
-                      <td className="py-4 px-4 font-medium text-slate-200">
-                        {checkInDate.toLocaleDateString(undefined, {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
-
-                      {/* Clock In */}
-                      <td className="py-4 px-4 font-mono text-xs">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          <span>
-                            {checkInDate.toLocaleTimeString(undefined, {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit'
-                            })}
-                          </span>
+              <tbody className="divide-y divide-white/5">
+                {filteredHistory.map((record) => (
+                  <tr key={record.id} className="group hover:bg-white/5 transition-colors">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400">
+                          <Calendar size={14} />
                         </div>
-                      </td>
-
-                      {/* Clock Out */}
-                      <td className="py-4 px-4 font-mono text-xs">
-                        {record.checkOut ? (
-                          <div className="flex items-center space-x-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                            <span>
-                              {new Date(record.checkOut).toLocaleTimeString(undefined, {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-indigo-400 font-bold bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 text-[10px] animate-pulse">
-                            ACTIVE SHIFT
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Duration */}
-                      <td className="py-4 px-4 font-semibold text-slate-400">
-                        {record.totalHours !== null ? (
-                          `${record.totalHours.toFixed(2)} hrs`
-                        ) : (
-                          <div className="flex items-center text-xs text-indigo-400">
-                            <span>Calculating...</span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Status + Lateness Indicator */}
-                      <td className="py-4 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold ${
-                            isLate
-                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/25'
-                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
-                          }`}
-                        >
-                          {isLate ? 'LATE' : 'ON TIME'}
+                        <span className="text-sm font-semibold text-slate-200">
+                          {new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="text-xs font-mono text-slate-400">
+                        {new Date(record.checkIn).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {record.checkOut ? (
+                        <span className="text-xs font-mono text-slate-400">
+                          {new Date(record.checkOut).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className="text-xs font-bold text-slate-300">
+                        {record.totalHours ? `${record.totalHours.toFixed(2)} hrs` : '--'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
+                        record.status?.toUpperCase() === 'LATE'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      }`}>
+                        {record.status?.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}
         </div>
-
-        {/* Small footer metric summary */}
-        <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-2">
-          <div>
-            Showing <strong className="text-slate-300">{filteredHistory.length}</strong> of{' '}
-            <strong className="text-slate-300">{totalDays}</strong> total sessions
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-              On Time sessions: {totalDays - lateDays}
-            </span>
-            <span className="flex items-center">
-              <span className="h-2 w-2 rounded-full bg-rose-500 mr-1.5" />
-              Late sessions: {lateDays}
-            </span>
-          </div>
-        </div>
-
       </div>
-
     </div>
   );
 }
