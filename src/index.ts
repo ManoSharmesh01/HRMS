@@ -118,6 +118,17 @@ const authorizeRoles = (...roles: string[]) => {
   };
 };
 
+function parseMultiValueParam(param: any): string[] | undefined {
+  if (!param) return undefined;
+  if (Array.isArray(param)) {
+    return param.map(p => String(p).trim()).filter(Boolean);
+  }
+  if (typeof param === 'string') {
+    return param.split(',').map(p => p.trim()).filter(Boolean);
+  }
+  return [String(param).trim()];
+}
+
 // --- ROUTES ---
 
 // Health Check
@@ -241,25 +252,42 @@ app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res
 // Employee Management API (requires authentication)
 app.get('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthenticatedRequest, res) => {
   try {
-    const { role, department, status, search } = req.query;
+    const { role, department, status, search, page, limit, skip, take } = req.query;
     
     const whereClause: any = {};
     
-    if (role) {
-      whereClause.role = String(role).trim().toUpperCase();
+    const parsedRoles = parseMultiValueParam(role);
+    if (parsedRoles && parsedRoles.length > 0) {
+      whereClause.role = { in: parsedRoles.map(r => r.toUpperCase()) };
     }
-    if (department) {
-      whereClause.department = String(department).trim();
+    
+    const parsedDepartments = parseMultiValueParam(department);
+    if (parsedDepartments && parsedDepartments.length > 0) {
+      whereClause.department = { in: parsedDepartments };
     }
-    if (status) {
-      whereClause.status = String(status).trim();
+    
+    const parsedStatuses = parseMultiValueParam(status);
+    if (parsedStatuses && parsedStatuses.length > 0) {
+      whereClause.status = { in: parsedStatuses };
     }
+    
     if (search) {
       whereClause.OR = [
         { name: { contains: String(search) } },
         { email: { contains: String(search) } }
       ];
     }
+
+    const prismaSkip = skip ? parseInt(String(skip)) : undefined;
+    const prismaTake = take ? parseInt(String(take)) : undefined;
+
+    const parsedPage = page ? parseInt(String(page)) : 1;
+    const parsedLimit = limit ? parseInt(String(limit)) : 10;
+
+    const finalTake = prismaTake !== undefined ? prismaTake : (limit ? parsedLimit : undefined);
+    const finalSkip = prismaSkip !== undefined ? prismaSkip : (page && limit ? (parsedPage - 1) * parsedLimit : undefined);
+
+    const total = await prisma.employee.count({ where: whereClause });
 
     const employees = await prisma.employee.findMany({
       where: whereClause,
@@ -271,9 +299,17 @@ app.get('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANA
         department: true,
         salary: true,
         status: true,
-      }
+      },
+      skip: finalSkip,
+      take: finalTake,
+      orderBy: { id: 'asc' }
     });
-    res.json(employees);
+    res.json({
+      data: employees,
+      total,
+      page: parsedPage,
+      limit: parsedLimit
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -788,21 +824,57 @@ app.get('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res)
     const role = req.user?.role;
     if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
 
-    let leaves;
-    if (role === 'ADMIN' || role === 'HR' || role === 'MANAGER') {
-      leaves = await prisma.leave.findMany({
-        include: { employee: { select: { id: true, name: true, email: true, role: true, department: true } } },
-        orderBy: { startDate: 'desc' }
-      });
-    } else {
-      leaves = await prisma.leave.findMany({
-        where: { employeeId },
-        include: { employee: { select: { id: true, name: true, email: true, role: true, department: true } } },
-        orderBy: { startDate: 'desc' }
-      });
+    const { page, limit, skip, take, search, type, status } = req.query;
+
+    const whereClause: any = {};
+    if (role !== 'ADMIN' && role !== 'HR' && role !== 'MANAGER') {
+      whereClause.employeeId = employeeId;
     }
 
-    res.json(leaves);
+    const parsedTypes = parseMultiValueParam(type);
+    if (parsedTypes && parsedTypes.length > 0) {
+      whereClause.type = { in: parsedTypes };
+    }
+
+    const parsedStatuses = parseMultiValueParam(status);
+    if (parsedStatuses && parsedStatuses.length > 0) {
+      whereClause.status = { in: parsedStatuses.map(s => s.toUpperCase()) };
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { reason: { contains: String(search) } },
+        { type: { contains: String(search) } },
+        { employee: { name: { contains: String(search) } } },
+        { employee: { email: { contains: String(search) } } }
+      ];
+    }
+
+    const prismaSkip = skip ? parseInt(String(skip)) : undefined;
+    const prismaTake = take ? parseInt(String(take)) : undefined;
+
+    const parsedPage = page ? parseInt(String(page)) : 1;
+    const parsedLimit = limit ? parseInt(String(limit)) : 10;
+
+    const finalTake = prismaTake !== undefined ? prismaTake : (limit ? parsedLimit : undefined);
+    const finalSkip = prismaSkip !== undefined ? prismaSkip : (page && limit ? (parsedPage - 1) * parsedLimit : undefined);
+
+    const total = await prisma.leave.count({ where: whereClause });
+
+    const leaves = await prisma.leave.findMany({
+      where: whereClause,
+      include: { employee: { select: { id: true, name: true, email: true, role: true, department: true } } },
+      orderBy: { startDate: 'desc' },
+      skip: finalSkip,
+      take: finalTake
+    });
+
+    res.json({
+      data: leaves,
+      total,
+      page: parsedPage,
+      limit: parsedLimit
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

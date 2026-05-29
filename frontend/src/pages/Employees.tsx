@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useDebounce } from '../hooks/useDebounce';
 import {
   Plus,
   Search,
@@ -79,12 +80,25 @@ export default function Employees() {
   const canModify = currentUser?.role === 'ADMIN' || currentUser?.role === 'HR';
   const canDelete = currentUser?.role === 'ADMIN';
 
+  const [page, setPage] = useState(1);
+  const limit = 8;
+
+  const debouncedSearch = useDebounce(search, 400);
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, department, role, status]);
+
   // React Query fetch employees
-  const { data: employees = [], isLoading, error, refetch } = useQuery<Employee[]>({
-    queryKey: ['employees', { search, department, role, status }],
+  const { data: employeeData, isLoading, error, refetch } = useQuery<{ data: Employee[]; total: number }>({
+    queryKey: ['employees', { search: debouncedSearch, department, role, status, page, limit }],
     queryFn: async () => {
-      const params: any = {};
-      if (search.trim()) params.search = search.trim();
+      const params: any = {
+        page,
+        limit,
+      };
+      if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
       if (department) params.department = department;
       if (role) params.role = role;
       if (status) params.status = status;
@@ -93,6 +107,9 @@ export default function Employees() {
       return response.data;
     }
   });
+
+  const employees = employeeData?.data || [];
+  const total = employeeData?.total || 0;
 
   // Mutate create
   const createMutation = useMutation({
@@ -584,6 +601,31 @@ export default function Employees() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-950/20 border-t border-white/5 gap-4">
+            <p className="text-xs text-slate-400">
+              Showing <span className="font-semibold text-slate-200">{total === 0 ? 0 : (page - 1) * limit + 1}</span> to{' '}
+              <span className="font-semibold text-slate-200">{Math.min(page * limit, total)}</span> of{' '}
+              <span className="font-semibold text-slate-200">{total}</span> records
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/40 hover:bg-slate-900 text-slate-300 border border-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((prev) => Math.min(prev + 1, Math.ceil(total / limit)))}
+                disabled={page >= Math.ceil(total / limit)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/40 hover:bg-slate-900 text-slate-300 border border-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}
