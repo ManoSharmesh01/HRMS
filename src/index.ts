@@ -85,19 +85,37 @@ interface AuthenticatedRequest extends Request {
 
 const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
+  if (!authHeader) {
     return res.status(401).json({ error: 'Access token required' });
   }
 
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
+    return res.status(401).json({ error: 'Authorization header schema must be Bearer <token>' });
+  }
+
+  const token = parts[1];
+
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
     req.user = decoded as AuthenticatedRequest['user'];
     next();
   });
+};
+
+// Fine-grained Role-Based Access Control (RBAC) middleware
+const authorizeRoles = (...roles: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized: No active session' });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Unauthorized role' });
+    }
+    next();
+  };
 };
 
 // --- ROUTES ---
@@ -144,7 +162,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     const { password: _, ...employeeWithoutPassword } = employee;
     res.status(201).json(employeeWithoutPassword);
-  } catch (error: any) {
+  } catch (error: any) { 
     res.status(500).json({ error: error.message });
   }
 });
@@ -188,8 +206,38 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const employee = await prisma.employee.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        department: true,
+        salary: true,
+        status: true,
+      }
+    });
+
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    res.json(employee);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Employee Management API (requires authentication)
-app.get('/api/employees', authenticateToken, async (req: AuthenticatedRequest, res) => {
+app.get('/api/employees', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthenticatedRequest, res) => {
   try {
     const employees = await prisma.employee.findMany({
       select: {
@@ -221,7 +269,7 @@ app.post('/api/attendance/checkin', authenticateToken, async (req: Authenticated
     const existing = await prisma.attendance.findFirst({
       where: {
         employeeId,
-        date: {
+        date: { 
           gte: todayStart
         },
         checkOut: null
@@ -385,13 +433,8 @@ app.get('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res)
   }
 });
 
-app.put('/api/leaves/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+app.put('/api/leaves/:id', authenticateToken, authorizeRoles('ADMIN'), async (req: AuthenticatedRequest, res) => {
   try {
-    const role = req.user?.role;
-    if (role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Only admins can approve/reject leaves' });
-    }
-
     const { id } = req.params;
     const { status } = req.body;
     if (!status || !['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
@@ -418,13 +461,8 @@ app.put('/api/leaves/:id', authenticateToken, async (req: AuthenticatedRequest, 
 });
 
 // Activities API
-app.get('/api/activities', authenticateToken, async (req: AuthenticatedRequest, res) => {
+app.get('/api/activities', authenticateToken, authorizeRoles('ADMIN'), async (req: AuthenticatedRequest, res) => {
   try {
-    const role = req.user?.role;
-    if (role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Admin authorization required' });
-    }
-
     const activities = await prisma.activity.findMany({
       orderBy: { createdAt: 'desc' },
       take: 50
@@ -447,13 +485,8 @@ app.get('/api/events', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, async (req: AuthenticatedRequest, res) => {
+app.post('/api/events', authenticateToken, authorizeRoles('ADMIN'), async (req: AuthenticatedRequest, res) => {
   try {
-    const role = req.user?.role;
-    if (role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Only admins can create events' });
-    }
-
     const { title, date, type } = req.body;
     if (!title || !date || !type) {
       return res.status(400).json({ error: 'Missing required fields' });
