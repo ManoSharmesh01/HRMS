@@ -1,0 +1,58 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Employee {
+  id         Int          @id @default(autoincrement())
+  name       String
+  email      String       @unique
+  password   String
+  role       String
+  department String
+  salary     Float
+  status     String
+  attendances Attendance[]
+  leaves     Leave[]
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  date       DateTime @default(now())
+  checkIn    DateTime
+  checkOut   DateTime?
+  status     String
+  totalHours Float?
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Leave {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  type       String
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  status     String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        Int      @id @default(autoincrement())
+  message   String
+  module    String
+  type      String
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id    Int      @id @default(autoincrement())
+  title String
+  date  DateTime
+  type  String
+}
