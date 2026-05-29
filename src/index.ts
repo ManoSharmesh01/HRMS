@@ -165,7 +165,7 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(201).json(employeeWithoutPassword);
   } catch (error: any) { 
     res.status(500).json({ error: error.message });
-  }
+  } 
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -736,9 +736,14 @@ app.post('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res
     const employeeId = req.user?.id;
     if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { type, startDate, endDate, reason } = req.body;
-    if (!type || !startDate || !endDate || !reason) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Extract fields, supporting both acceptance criteria terms (category, justification) and existing terms (type, reason)
+    const { category, type, startDate, endDate, justification, reason } = req.body;
+    
+    const leaveType = category || type;
+    const leaveReason = justification || reason;
+
+    if (!leaveType || !startDate || !endDate || !leaveReason) {
+      return res.status(400).json({ error: 'Missing required fields: category/type, startDate, endDate, justification/reason are all required' });
     }
 
     const start = new Date(startDate);
@@ -746,24 +751,26 @@ app.post('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({ error: 'Invalid start or end date format' });
     }
-    if (start > end) {
-      return res.status(400).json({ error: 'Start date cannot be after end date' });
+    
+    // Technical Hint: Ensure leave requests contain validations ensuring startDate is earlier than endDate.
+    if (start.getTime() >= end.getTime()) {
+      return res.status(400).json({ error: 'Start date must be earlier than end date' });
     }
 
     const leave = await prisma.leave.create({
       data: {
         employeeId,
-        type,
+        type: String(leaveType).trim(),
         startDate: start,
         endDate: end,
-        reason,
+        reason: String(leaveReason).trim(),
         status: 'PENDING'
       }
     });
 
     await prisma.activity.create({
       data: {
-        message: `Employee ID ${employeeId} requested ${type} leave`,
+        message: `Employee ID ${employeeId} requested ${leaveType} leave`,
         module: 'LEAVE',
         type: 'INFO'
       }
@@ -782,19 +789,64 @@ app.get('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res)
     if (!employeeId) return res.status(401).json({ error: 'Unauthorized' });
 
     let leaves;
-    if (role === 'ADMIN') {
+    if (role === 'ADMIN' || role === 'HR' || role === 'MANAGER') {
       leaves = await prisma.leave.findMany({
-        include: { employee: { select: { name: true, email: true, department: true } } },
+        include: { employee: { select: { id: true, name: true, email: true, role: true, department: true } } },
         orderBy: { startDate: 'desc' }
       });
     } else {
       leaves = await prisma.leave.findMany({
         where: { employeeId },
+        include: { employee: { select: { id: true, name: true, email: true, role: true, department: true } } },
         orderBy: { startDate: 'desc' }
       });
     }
 
     res.json(leaves);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.patch('/api/leaves/:id/status', authenticateToken, authorizeRoles('ADMIN', 'HR', 'MANAGER'), async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const leaveId = parseInt(id);
+    if (isNaN(leaveId)) {
+      return res.status(400).json({ error: 'Invalid leave ID' });
+    }
+
+    let { status } = req.body;
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+
+    const normalizedStatus = status.trim().toUpperCase();
+    if (!['APPROVED', 'REJECTED', 'PENDING', 'ACCEPTED'].includes(normalizedStatus)) {
+      return res.status(400).json({ error: 'Invalid status. Status must be APPROVED, REJECTED, ACCEPTED, or PENDING' });
+    }
+
+    const existingLeave = await prisma.leave.findUnique({
+      where: { id: leaveId }
+    });
+    if (!existingLeave) {
+      return res.status(404).json({ error: 'Leave request not found' });
+    }
+
+    const updated = await prisma.leave.update({
+      where: { id: leaveId },
+      data: { status: normalizedStatus }
+    });
+
+    await prisma.activity.create({
+      data: {
+        message: `Leave ID ${id} status updated to ${normalizedStatus} by user ${req.user?.email}`,
+        module: 'LEAVE',
+        type: 'INFO'
+      }
+    });
+
+    res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
