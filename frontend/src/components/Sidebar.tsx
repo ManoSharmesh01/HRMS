@@ -8,7 +8,9 @@ import {
   Activity,
   Users,
   Clock,
-  Calendar
+  Calendar,
+  ClipboardList,
+  LayoutGrid
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,9 +24,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Workplace', path: '/workspace', icon: LayoutGrid },
     { name: 'Attendance', path: '/attendance', icon: Clock },
     { name: 'Employees', path: '/employees', icon: Users },
-    { name: 'Leave Requests', path: '/leaves', icon: Calendar },
+    { name: 'Leave Requests', path: '/leaves', icon: ClipboardList },
   ];
 
   const handleLogout = () => {

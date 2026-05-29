@@ -161,6 +161,9 @@ async function seedDefaultData() {
         },
       });
       await prisma.event.create({ data: { title: 'Orientation', date: new Date(Date.now() + 86400000), type: 'MEETING' } });
+      await prisma.event.create({ data: { title: 'New Year Day', date: new Date('2025-01-01'), type: 'HOLIDAY' } });
+      await prisma.event.create({ data: { title: 'Republic Day', date: new Date('2025-01-26'), type: 'HOLIDAY' } });
+      await prisma.event.create({ data: { title: 'Strategy Sync', date: new Date('2025-01-15'), type: 'MEETING' } });
       await prisma.activity.create({ data: { message: 'System initialization completed', module: 'SYSTEM', type: 'INFO', actor: 'System' } });
     }
   } catch (err) { console.error('Seed error:', err); }
@@ -406,6 +409,39 @@ app.patch('/api/leaves/:id/status', authenticateToken, async (req, res) => {
 });
 
 // Activity Routes
+app.get('/api/calendar/data', authenticateToken, async (req, res) => {
+  try {
+    const [events, leaves] = await prisma.$transaction([
+      prisma.event.findMany({ orderBy: { date: 'asc' } }),
+      prisma.leave.findMany({
+        where: { status: 'APPROVED' },
+        include: { employee: { select: { name: true } } }
+      })
+    ]);
+
+    const calendarItems = [
+      ...events.map(e => ({
+        id: `event-${e.id}`,
+        title: e.title,
+        date: e.date,
+        type: e.type,
+        category: 'event'
+      })),
+      ...leaves.map(l => ({
+        id: `leave-${l.id}`,
+        title: `${l.employee.name} - ${l.type}`,
+        date: l.startDate,
+        endDate: l.endDate,
+        type: 'LEAVE',
+        category: 'leave',
+        reason: l.reason
+      }))
+    ];
+
+    res.json(calendarItems);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/activity', authenticateToken, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query as any;

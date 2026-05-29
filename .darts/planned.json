@@ -75,15 +75,66 @@
       "created_at": "2026-05-29T13:06:14.505Z",
       "updated_at": "2026-05-29T13:06:14.582Z",
       "completed_at": "2026-05-29T13:06:14.582Z"
+    },
+    {
+      "id": 5,
+      "task_id": "T-001",
+      "module": "PlannerCoder",
+      "feature": "Construct a comprehensive interactive visual calendar on ...",
+      "task": "Backend - Calendar API & Seeding",
+      "description": "Backend - Calendar API & Seeding",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "new",
+      "created_from": "spec_generation",
+      "ui_task_id": 60,
+      "files": [],
+      "created_at": "2026-05-29T13:20:47.718Z"
+    },
+    {
+      "id": 6,
+      "task_id": "T-002",
+      "module": "PlannerCoder",
+      "feature": "Construct a comprehensive interactive visual calendar on ...",
+      "task": "Frontend Wiring & Sidebar",
+      "description": "Frontend Wiring & Sidebar",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "new",
+      "created_from": "spec_generation",
+      "ui_task_id": 60,
+      "files": [],
+      "created_at": "2026-05-29T13:20:47.718Z"
+    },
+    {
+      "id": 7,
+      "task_id": "T-003",
+      "module": "PlannerCoder",
+      "feature": "Construct a comprehensive interactive visual calendar on ...",
+      "task": "Frontend Workspace UI",
+      "description": "Frontend Workspace UI",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "new",
+      "created_from": "spec_generation",
+      "ui_task_id": 60,
+      "files": [],
+      "created_at": "2026-05-29T13:20:47.718Z"
     }
   ],
   "metadata": {
     "source": "mixed",
     "target_framework": "ReactJS Backend Express JS",
     "gap_summary": "",
-    "total_tasks": 4,
+    "total_tasks": 7,
     "created_at": "2026-05-29T12:46:00.821Z",
-    "last_updated": "2026-05-29T13:06:14.582Z"
+    "last_updated": "2026-05-29T13:20:47.718Z"
   },
-  "last_updated": "2026-05-29T13:06:14.582Z"
+  "last_updated": "2026-05-29T13:20:47.718Z"
 }

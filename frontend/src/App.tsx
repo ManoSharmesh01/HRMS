@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Workspace from './pages/Workspace';
 import Employees from './pages/Employees';
 import Attendance from './pages/Attendance';
 import Leaves from './pages/Leaves';
@@ -91,6 +92,7 @@ export default function App() {
                 >
                   <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="workspace" element={<Workspace />} />
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="employees" element={<Employees />} />
                   <Route path="leaves" element={<Leaves />} />
