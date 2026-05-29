@@ -24,7 +24,8 @@ import {
   CheckCircle,
   FileText,
   Download,
-  Loader2
+  Loader2,
+  Lock
 } from 'lucide-react';
 import { TableSkeleton, Button, Modal, Input, Badge, Card } from '../components/common';
 import ErrorBanner from '../components/common/ErrorBanner';
@@ -300,20 +301,20 @@ export default function Employees() {
   const getRoleBadgeStyle = (role: string) => {
     switch (role.toUpperCase()) {
       case 'ADMIN':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20';
       case 'HR':
-        return 'bg-pink-500/10 text-pink-400 border-pink-500/20';
+        return 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20';
       case 'MANAGER':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
       default:
-        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+        return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20';
     }
   };
 
   const getStatusBadgeStyle = (status: string) => {
     return status.toUpperCase() === 'ACTIVE'
-      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-      : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+      : 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20';
   };
 
   const clearFilters = () => {
@@ -326,13 +327,13 @@ export default function Employees() {
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Top Header Panel */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 rounded-2xl glass-panel relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 rounded-2xl glass-panel relative overflow-hidden bg-white dark:bg-slate-900/40">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:bg-gradient-to-r dark:from-white dark:via-indigo-200 dark:to-indigo-400 dark:bg-clip-text dark:text-transparent">
             Employee Directory
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Map staff lists, configure custom profiles, and execute operational controls.
           </p>
         </div>
@@ -340,7 +341,7 @@ export default function Employees() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleExport}
-            className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
+            className="flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200"
           >
             <Download size={18} className="mr-2" />
             Export CSV
@@ -358,7 +359,7 @@ export default function Employees() {
       </div>
 
       {/* Filters Panel */}
-      <div className="p-5 rounded-2xl glass-panel grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+      <div className="p-5 rounded-2xl glass-panel grid grid-cols-1 md:grid-cols-5 gap-4 items-center bg-white dark:bg-slate-900/40 border border-black/5 dark:border-white/5">
         {/* Search */}
         <div className="relative md:col-span-2">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
@@ -423,7 +424,7 @@ export default function Employees() {
             <button
               onClick={clearFilters}
               title="Clear Filters"
-              className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center shrink-0"
+              className="p-2.5 rounded-xl text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 border border-black/5 dark:border-white/10 transition-all flex items-center justify-center shrink-0"
             >
               <X size={18} />
             </button>
@@ -448,12 +449,12 @@ export default function Employees() {
         />
       ) : (
         /* Grid and Table Containers */
-        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5">
+        <div className="glass-panel rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 bg-white dark:bg-slate-900/40">
           {/* Table View (for larger screens) */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-slate-950/20 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-950/20 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="px-6 py-4">ID</th>
                   <th className="px-6 py-4">Staff Member</th>
                   <th className="px-6 py-4">Department</th>
@@ -463,25 +464,25 @@ export default function Employees() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-sm text-slate-300">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5 text-sm text-slate-700 dark:text-slate-300">
                 {employees.map((emp) => (
                   <tr
                     key={emp.id}
-                    className="hover:bg-white/5 transition-colors duration-150 group"
+                    className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-150 group"
                   >
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-400">
+                    <td className="px-6 py-4 text-xs font-semibold text-slate-400 dark:text-slate-500">
                       #EMP{String(emp.id).padStart(3, '0')}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
+                        <div className="h-10 w-10 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
                           {emp.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-semibold text-white group-hover:text-indigo-200 transition-colors">
+                          <p className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-200 transition-colors">
                             {emp.name}
                           </p>
-                          <p className="text-xs text-slate-400 mt-0.5">{emp.email}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{emp.email}</p>
                         </div>
                       </div>
                     </td>
@@ -491,17 +492,17 @@ export default function Employees() {
                         {emp.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-mono text-indigo-300">${emp.salary.toLocaleString()}</td>
+                    <td className="px-6 py-4 font-mono text-indigo-600 dark:text-indigo-300 font-semibold">${emp.salary.toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
                         {emp.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                      <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleViewClick(emp)}
-                          className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                           title="View Profile"
                         >
                           <Eye size={16} />
@@ -509,7 +510,7 @@ export default function Employees() {
                         {canModify && (
                           <button
                             onClick={() => handleEditClick(emp)}
-                            className="p-2 text-indigo-400 hover:text-white hover:bg-indigo-500/20 rounded-lg transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                             title="Edit Employee"
                           >
                             <Edit size={16} />
@@ -518,7 +519,7 @@ export default function Employees() {
                         {canDelete && (
                           <button
                             onClick={() => handleDeleteClick(emp.id)}
-                            className="p-2 text-rose-400 hover:text-white hover:bg-rose-500/20 rounded-lg transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
                             title="Delete Employee"
                           >
                             <Trash2 size={16} />
@@ -532,90 +533,23 @@ export default function Employees() {
             </table>
           </div>
 
-          {/* Mobile View (Grid Cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden p-4">
-            {employees.map((emp) => (
-              <div
-                key={emp.id}
-                className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-12 w-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
-                      {emp.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white">{emp.name}</p>
-                      <p className="text-xs text-slate-400">{emp.email}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
-                    {emp.status}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2 rounded-lg bg-white/5">
-                    <p className="text-slate-500 uppercase font-bold text-[9px]">Department</p>
-                    <p className="text-slate-200 mt-0.5">{emp.department}</p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white/5">
-                    <p className="text-slate-500 uppercase font-bold text-[9px]">Role</p>
-                    <p className="text-slate-200 mt-0.5">{emp.role}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                  <p className="font-mono text-indigo-300">${emp.salary.toLocaleString()}</p>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleViewClick(emp)}
-                      className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    {canModify && (
-                      <button
-                        onClick={() => handleEditClick(emp)}
-                        className="p-2 text-indigo-400 hover:text-white rounded-lg transition-colors"
-                      >
-                        <Edit size={16} />
-                      </button>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => handleDeleteClick(emp.id)}
-                        className="p-2 text-rose-400 hover:text-white rounded-lg transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination Footer */}
-          <div className="px-6 py-4 bg-slate-950/20 border-t border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <p className="text-xs text-slate-400">
-              Showing <span className="text-white font-bold">{employees.length}</span> of <span className="text-white font-bold">{total}</span> total staff entries
+          {/* Pagination */}
+          <div className="px-6 py-4 border-t border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-950/20 flex items-center justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Showing <span className="text-slate-900 dark:text-white">{employees.length}</span> of <span className="text-slate-900 dark:text-white">{total}</span> members
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center space-x-2">
               <button
                 disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50 transition-all"
+                onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-all"
               >
                 Previous
               </button>
-              <div className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
-                Page {page}
-              </div>
               <button
                 disabled={page * limit >= total}
                 onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50 transition-all"
+                className="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-all"
               >
                 Next
               </button>
@@ -624,40 +558,35 @@ export default function Employees() {
         </div>
       )}
 
-      {/* MODALS RENDERED BELOW (UNCHANGED) */}
-      {/* Form Modal */}
+      {/* Add/Edit Modal */}
       <Modal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        title={modalMode === 'add' ? 'Register New Employee' : 'Edit Staff Profile'}
-        size="lg"
+        title={modalMode === 'add' ? 'Add New Employee' : 'Edit Employee Profile'}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setIsFormModalOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={() => setIsFormModalOpen(false)}>Cancel</Button>
             <Button
               onClick={(e) => handleSubmit(e as any)}
               isLoading={createMutation.isPending || updateMutation.isPending}
-              leftIcon={<CheckCircle size={18} />}
             >
-              {modalMode === 'add' ? 'Confirm Registration' : 'Save Changes'}
+              {modalMode === 'add' ? 'Create Account' : 'Save Changes'}
             </Button>
           </>
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Full Name"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
               error={errors.name}
-              leftIcon={<User size={18} />}
               placeholder="e.g. John Doe"
+              leftIcon={<User size={18} />}
+              required
             />
-
             <Input
               label="Email Address"
               name="email"
@@ -665,37 +594,24 @@ export default function Employees() {
               value={formData.email}
               onChange={handleInputChange}
               error={errors.email}
-              leftIcon={<Mail size={18} />}
               placeholder="john@company.com"
+              leftIcon={<Mail size={18} />}
+              required
             />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Department
+              </label>
               <div className="relative">
-                <Shield className="absolute left-3 top-2.5 text-slate-500" size={18} />
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl text-sm glass-input border-white/10"
-                >
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="HR">HR</option>
-                  <option value="MANAGER">MANAGER</option>
-                  <option value="EMPLOYEE">EMPLOYEE</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
-              <div className="relative">
-                <Briefcase className="absolute left-3 top-2.5 text-slate-500" size={18} />
+                <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <select
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl text-sm glass-input border-white/10"
+                  className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/50 border border-black/10 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
                 >
                   <option value="Engineering">Engineering</option>
                   <option value="Product">Product</option>
@@ -709,24 +625,49 @@ export default function Employees() {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Role Access
+              </label>
+              <div className="relative">
+                <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-slate-900/50 border border-black/10 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+                >
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="HR">HR</option>
+                  <option value="MANAGER">MANAGER</option>
+                  <option value="EMPLOYEE">EMPLOYEE</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Salary (Annual USD)"
+              label="Base Salary ($)"
               name="salary"
               type="number"
               value={formData.salary}
               onChange={handleInputChange}
               error={errors.salary}
+              placeholder="e.g. 75000"
               leftIcon={<DollarSign size={18} />}
-              placeholder="75000"
+              required
             />
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Status</label>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Employment Status
+              </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-xl text-sm glass-input border-white/10"
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900/50 border border-black/10 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -742,147 +683,140 @@ export default function Employees() {
               value={formData.password}
               onChange={handleInputChange}
               error={errors.password}
-              helperText="Required for new employees to sign in initially."
-              placeholder="••••••••"
+              placeholder="Min. 6 characters"
+              leftIcon={<Lock size={18} />}
+              helperText="Employee can change this after first login"
             />
           )}
         </form>
       </Modal>
 
-      {/* Profile Modal */}
-      {isProfileModalOpen && selectedEmployee && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-slideUp">
-            {/* Profile Header Background */}
-            <div className="h-32 bg-gradient-to-r from-indigo-600 to-violet-700 relative">
-               <button 
-                onClick={() => setIsProfileModalOpen(false)} 
-                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-all"
-              >
-                <X size={20} />
-              </button>
+      {/* Profile Detail Modal */}
+      <Modal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        title="Employee Profile Snapshot"
+        size="lg"
+      >
+        {selectedEmployee && (
+          <div className="space-y-8">
+            {/* Profile Header */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="h-24 w-24 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-3xl shrink-0">
+                {selectedEmployee.name.charAt(0)}
+              </div>
+              <div className="text-center sm:text-left">
+                <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{selectedEmployee.name}</h3>
+                <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+                  <Mail size={14} /> {selectedEmployee.email}
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
+                  <Badge variant="primary">{selectedEmployee.role}</Badge>
+                  <Badge variant={selectedEmployee.status === 'ACTIVE' ? 'success' : 'ghost'}>
+                    {selectedEmployee.status}
+                  </Badge>
+                </div>
+              </div>
             </div>
-            
-            <div className="px-8 pb-8">
-              {/* Avatar Overlap */}
-              <div className="relative -mt-12 mb-6">
-                <div className="h-24 w-24 rounded-3xl bg-slate-900 p-1.5 border border-white/10 shadow-2xl">
-                  <div className="h-full w-full rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl font-black text-white">
-                    {selectedEmployee.name.charAt(0)}
-                  </div>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 space-y-6">
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-slate-50 dark:bg-slate-950/20 border-black/5 dark:border-white/5" noPadding>
+                <div className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
+                    <Briefcase size={20} />
+                  </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">{selectedEmployee.name}</h3>
-                    <p className="text-slate-400 font-medium flex items-center mt-1">
-                      <Mail size={14} className="mr-2 text-indigo-400" />
-                      {selectedEmployee.email}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Department</p>
-                      <div className="flex items-center text-slate-100 font-semibold">
-                        <Briefcase size={16} className="mr-2 text-indigo-400" />
-                        {selectedEmployee.department}
-                      </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Annual Salary</p>
-                      <div className="flex items-center text-emerald-400 font-bold">
-                        <DollarSign size={16} className="mr-1" />
-                        {selectedEmployee.salary.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
-                      <Info size={14} className="mr-2" />
-                      Operational Overview
-                    </h4>
-                    <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-xs text-slate-400 leading-relaxed">
-                      This employee is currently <span className="text-indigo-300 font-bold underline underline-offset-4">{selectedEmployee.status.toLowerCase()}</span> within the system. 
-                      Access levels are restricted based on the <span className="text-white font-bold">{selectedEmployee.role}</span> role configuration. 
-                      Last profile reconciliation was performed recently.
-                    </div>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Department</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedEmployee.department}</p>
                   </div>
                 </div>
+              </Card>
 
-                <div className="space-y-6">
-                  <div className="p-5 rounded-2xl bg-slate-950/40 border border-white/5 space-y-4">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security & Role</p>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400">System Role</span>
-                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${getRoleBadgeStyle(selectedEmployee.role)}`}>
-                          {selectedEmployee.role}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400">Status</span>
-                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${getStatusBadgeStyle(selectedEmployee.status)}`}>
-                          {selectedEmployee.status}
-                        </span>
-                      </div>
-                    </div>
+              <Card className="bg-slate-50 dark:bg-slate-950/20 border-black/5 dark:border-white/5" noPadding>
+                <div className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600 dark:text-emerald-400">
+                    <DollarSign size={20} />
                   </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Compensation</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">${selectedEmployee.salary.toLocaleString()} / year</p>
+                  </div>
+                </div>
+              </Card>
 
-                  <div className="space-y-2">
-                    <button className="w-full py-2.5 rounded-xl text-xs font-bold bg-white text-slate-900 hover:bg-slate-200 transition-all flex items-center justify-center">
-                      <FileText size={14} className="mr-2" />
-                      Download Full Dossier
-                    </button>
-                    {canModify && (
-                      <button 
-                        onClick={() => { setIsProfileModalOpen(false); handleEditClick(selectedEmployee); }}
-                        className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
-                      >
-                        Modify Professional Details
-                      </button>
-                    )}
+              <Card className="bg-slate-50 dark:bg-slate-950/20 border-black/5 dark:border-white/5" noPadding>
+                <div className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400">
+                    <Calendar size={20} />
                   </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Joined Date</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Dec 12, 2023</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="bg-slate-50 dark:bg-slate-950/20 border-black/5 dark:border-white/5" noPadding>
+                <div className="p-4 flex items-center space-x-3">
+                  <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Location</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">San Francisco, HQ</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10">
+              <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-3">Operational Logs</p>
+              <div className="space-y-3">
+                <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                  <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 mr-2" />
+                  <span className="font-semibold mr-2">Today, 09:42 AM:</span> Clock-in telemetry recorded (On-Time)
+                </div>
+                <div className="flex items-center text-xs text-slate-600 dark:text-slate-400">
+                  <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mr-2" />
+                  <span className="font-semibold mr-2">Yesterday:</span> Worked 8.5 hours total shift duration
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-scale-in">
+            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-600 dark:text-rose-400 w-fit mb-4">
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Terminate Profile?</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+              Are you sure you want to delete this staff record? This action will permanently remove all associated telemetry and is <span className="text-rose-600 dark:text-rose-400 font-bold">irreversible</span>.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+              >
+                Discard
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 flex items-center justify-center"
+              >
+                {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm'}
+              </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={!!deleteConfirmId}
-        onClose={() => setDeleteConfirmId(null)}
-        title="Confirm Deletion"
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>
-              Keep Profile
-            </Button>
-            <Button
-              variant="danger"
-              onClick={confirmDelete}
-              isLoading={isDeleting}
-            >
-              Delete Permanently
-            </Button>
-          </>
-        }
-      >
-        <div className="text-center">
-          <div className="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle size={32} />
-          </div>
-          <p className="text-sm text-slate-400">
-            Are you absolutely sure you want to remove this employee? This action is irreversible and will delete all associated records.
-          </p>
-        </div>
-      </Modal>
     </div>
   );
 }

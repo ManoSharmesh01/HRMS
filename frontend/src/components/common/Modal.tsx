@@ -34,17 +34,17 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-fade-in" 
+        className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in" 
         onClick={onClose}
       />
       <div 
-        className={`relative w-full ${sizes[size]} bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scale-in`}
+        className={`relative w-full ${sizes[size]} bg-white dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scale-in`}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-          <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-black/5 dark:border-white/5">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+            className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 transition-all"
           >
             <X size={20} />
           </button>
@@ -55,7 +55,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
         </div>
 
         {footer && (
-          <div className="px-6 py-4 border-t border-white/5 bg-slate-950/20 flex items-center justify-end space-x-3">
+          <div className="px-6 py-4 border-t border-black/5 dark:border-white/5 bg-slate-50 dark:bg-slate-950/20 flex items-center justify-end space-x-3">
             {footer}
           </div>
         )}

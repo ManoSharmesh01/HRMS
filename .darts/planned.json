@@ -16,8 +16,8 @@
       "ui_task_id": 56,
       "files": [],
       "created_at": "2026-05-29T12:47:34.445Z",
-      "updated_at": "2026-05-29T12:47:34.463Z",
-      "completed_at": "2026-05-29T12:47:34.463Z"
+      "updated_at": "2026-05-29T13:06:14.525Z",
+      "completed_at": "2026-05-29T13:06:14.526Z"
     },
     {
       "id": 2,
@@ -35,17 +35,55 @@
       "ui_task_id": 56,
       "files": [],
       "created_at": "2026-05-29T12:47:34.445Z",
-      "updated_at": "2026-05-29T12:47:34.479Z",
-      "completed_at": "2026-05-29T12:47:34.479Z"
+      "updated_at": "2026-05-29T13:06:14.544Z",
+      "completed_at": "2026-05-29T13:06:14.544Z"
+    },
+    {
+      "id": 3,
+      "task_id": "T-001",
+      "module": "PlannerCoder",
+      "feature": "Integrate light and dark theme capabilities utilizing Rea...",
+      "task": "Frontend Theme Context & Config",
+      "description": "Frontend Theme Context & Config",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 59,
+      "files": [],
+      "created_at": "2026-05-29T13:06:14.505Z",
+      "updated_at": "2026-05-29T13:06:14.564Z",
+      "completed_at": "2026-05-29T13:06:14.564Z"
+    },
+    {
+      "id": 4,
+      "task_id": "T-002",
+      "module": "PlannerCoder",
+      "feature": "Integrate light and dark theme capabilities utilizing Rea...",
+      "task": "Frontend UI - Components & Dark Mode",
+      "description": "Frontend UI - Components & Dark Mode",
+      "depends_on": [],
+      "acceptance_criteria": [],
+      "verification_commands": [],
+      "affected_files": [],
+      "status": "completed",
+      "created_from": "spec_generation",
+      "ui_task_id": 59,
+      "files": [],
+      "created_at": "2026-05-29T13:06:14.505Z",
+      "updated_at": "2026-05-29T13:06:14.582Z",
+      "completed_at": "2026-05-29T13:06:14.582Z"
     }
   ],
   "metadata": {
-    "source": "spec_generation",
+    "source": "mixed",
     "target_framework": "ReactJS Backend Express JS",
     "gap_summary": "",
-    "total_tasks": 2,
+    "total_tasks": 4,
     "created_at": "2026-05-29T12:46:00.821Z",
-    "last_updated": "2026-05-29T12:47:34.479Z"
+    "last_updated": "2026-05-29T13:06:14.582Z"
   },
-  "last_updated": "2026-05-29T12:47:34.479Z"
+  "last_updated": "2026-05-29T13:06:14.582Z"
 }

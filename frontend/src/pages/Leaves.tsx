@@ -128,12 +128,11 @@ export default function Leaves() {
   };
 
   // Compute Balances
-  // Allowances are hardcoded, but we subtract actual approved leave days of this employee
   const computeBalances = (): LeaveBalance[] => {
     const defaultBalances = [
-      { category: 'Annual Leave', allowance: 15, used: 0, remaining: 15, color: 'from-indigo-500/10 to-indigo-500/5 text-indigo-400 border-indigo-500/20' },
-      { category: 'Sick Leave', allowance: 10, used: 0, remaining: 10, color: 'from-emerald-500/10 to-emerald-500/5 text-emerald-400 border-emerald-500/20' },
-      { category: 'Casual Leave', allowance: 7, used: 0, remaining: 7, color: 'from-amber-500/10 to-amber-500/5 text-amber-400 border-amber-500/20' },
+      { category: 'Annual Leave', allowance: 15, used: 0, remaining: 15, color: 'from-indigo-500/10 to-indigo-500/5 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' },
+      { category: 'Sick Leave', allowance: 10, used: 0, remaining: 10, color: 'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
+      { category: 'Casual Leave', allowance: 7, used: 0, remaining: 7, color: 'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20' },
     ];
 
     if (!user) return defaultBalances;
@@ -239,14 +238,14 @@ export default function Leaves() {
       case 'APPROVED':
       case 'ACCEPTED':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <CheckCircle size={12} className="mr-1" />
             Approved
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-400">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400">
             <XCircle size={12} className="mr-1" />
             Rejected
           </span>
@@ -254,7 +253,7 @@ export default function Leaves() {
       case 'PENDING':
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-400">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
             <Clock size={12} className="mr-1" />
             Pending
           </span>
@@ -278,11 +277,11 @@ export default function Leaves() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Sparkles className="text-indigo-400 animate-pulse" size={28} />
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="text-indigo-600 dark:text-indigo-400 animate-pulse" size={28} />
             Leave Requests Overview
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Submit leave requests, check your allowances, and manage outstanding matrices.
           </p>
         </div>
@@ -305,8 +304,8 @@ export default function Leaves() {
 
       {/* Balance Cards */}
       <div>
-        <h2 className="text-lg font-bold text-slate-100 tracking-tight mb-4 flex items-center">
-          <ClipboardList size={18} className="mr-2 text-indigo-400" />
+        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight mb-4 flex items-center">
+          <ClipboardList size={18} className="mr-2 text-indigo-600 dark:text-indigo-400" />
           Your Annual Allowances & Balance
         </h2>
         {isLoading ? <KPISkeleton /> : (
@@ -319,39 +318,39 @@ export default function Leaves() {
               >
                 <div className="p-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                    <span className="text-xs font-semibold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
                       {bal.category}
                     </span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-slate-300">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 dark:bg-white/5 border border-black/5 dark:border-white/5 text-slate-700 dark:text-slate-300">
                       Total: {bal.allowance} Days
                     </span>
                   </div>
                   <div className="mt-4 flex justify-between items-baseline">
                     <div>
-                      <span className="text-3xl font-extrabold text-white tracking-tight">
+                      <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                         {bal.remaining}
                       </span>
-                      <span className="text-xs text-slate-400 ml-1">days remaining</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">days remaining</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-semibold text-slate-300 block">{bal.used} used</span>
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 block">{bal.used} used</span>
                     </div>
                   </div>
                 </div>
               </Card>
-            ))}
+            ))}States
           </div>
         )}
       </div>
 
       {/* Filters and Matrix list */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/5">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-white/5 mb-6">
+      <div className="glass-panel rounded-2xl p-6 border border-black/5 dark:border-white/5 bg-white dark:bg-slate-900/40">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-black/5 dark:border-white/5 mb-6">
           <div>
-            <h3 className="font-bold text-white tracking-tight">
+            <h3 className="font-bold text-slate-900 dark:text-white tracking-tight">
               Leave Matrix Board
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Showing {filteredLeaves.length} leave application records.
             </p>
           </div>
@@ -359,13 +358,13 @@ export default function Leaves() {
           <div className="flex flex-wrap items-center gap-3">
             {/* Status Filter */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                 Filter Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-40 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-40 bg-slate-50 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="PENDING">Pending</option>
@@ -376,13 +375,13 @@ export default function Leaves() {
 
             {/* Type Filter */}
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
                 Filter Category
               </label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-40 bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-40 bg-slate-50 dark:bg-slate-900 border border-black/5 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
               >
                 <option value="ALL">All Categories</option>
                 <option value="Annual Leave">Annual Leave</option>
@@ -412,7 +411,7 @@ export default function Leaves() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                <tr className="border-b border-black/5 dark:border-white/5 text-[11px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-950/20">
                   <th className="py-3 px-4">Employee</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4">Duration</th>
@@ -422,31 +421,31 @@ export default function Leaves() {
                   {isApprover && <th className="py-3 px-4 text-right">Actions Matrix</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-black/5 dark:divide-white/5">
                 {filteredLeaves.map((leave) => {
                   const daysCount = calculateDays(leave.startDate, leave.endDate);
                   const isPending = leave.status.toUpperCase() === 'PENDING';
                   return (
                     <tr
                       key={leave.id}
-                      className="text-sm hover:bg-white/5 transition-colors duration-150 group"
+                      className="text-sm text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-150 group"
                     >
-                      <td className="py-4 px-4 font-semibold text-slate-100">
+                      <td className="py-4 px-4 font-semibold text-slate-900 dark:text-slate-100">
                         {leave.employee?.name || `Employee #${leave.employeeId}`}
-                        <span className="block text-xs text-slate-400 font-normal">
+                        <span className="block text-xs text-slate-500 dark:text-slate-400 font-normal">
                           {leave.employee?.department || 'Department N/A'}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-slate-300 font-medium">
+                      <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium">
                         {leave.type}
                       </td>
-                      <td className="py-4 px-4 text-slate-300 text-xs font-mono">
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 text-xs font-mono">
                         {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
                       </td>
-                      <td className="py-4 px-4 text-slate-100 font-bold">
+                      <td className="py-4 px-4 text-slate-900 dark:text-slate-100 font-bold">
                         {daysCount} {daysCount === 1 ? 'day' : 'days'}
                       </td>
-                      <td className="py-4 px-4 text-slate-300 max-w-xs truncate" title={leave.reason}>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 max-w-xs truncate" title={leave.reason}>
                         {leave.reason}
                       </td>
                       <td className="py-4 px-4">
@@ -460,7 +459,7 @@ export default function Leaves() {
                                 <button
                                   onClick={() => handleUpdateStatus(leave.id, 'APPROVED')}
                                   disabled={updateStatusMutation.isPending}
-                                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                                   title="Approve Leave"
                                 >
                                   <Check size={14} className="mr-1" />
@@ -469,7 +468,7 @@ export default function Leaves() {
                                 <button
                                   onClick={() => handleUpdateStatus(leave.id, 'REJECTED')}
                                   disabled={updateStatusMutation.isPending}
-                                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
+                                  className="inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 disabled:opacity-50 transition-colors"
                                   title="Reject Leave"
                                 >
                                   <X size={14} className="mr-1" />
@@ -515,20 +514,20 @@ export default function Leaves() {
       >
         <form onSubmit={handleFormSubmit} className="space-y-5">
           {validationError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold flex items-center">
-              <XCircle size={16} className="mr-2 shrink-0" />
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center">
+              <XCircle size={16} className="mr-2" />
               {validationError}
             </div>
           )}
-
+          
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
               Leave Category
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-900/50 border border-black/10 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
             >
               <option value="Annual Leave">Annual Leave</option>
               <option value="Sick Leave">Sick Leave</option>
@@ -539,32 +538,36 @@ export default function Leaves() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Start Date"
               type="date"
               value={formData.startDate}
               onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              leftIcon={<Calendar size={18} />}
+              required
             />
             <Input
               label="End Date"
               type="date"
               value={formData.endDate}
               onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              leftIcon={<Calendar size={18} />}
+              required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
               Reason / Justification
             </label>
             <textarea
-              rows={3}
               value={formData.justification}
               onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
-              placeholder="Provide a brief explanation for your leave request..."
-              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-            ></textarea>
+              rows={4}
+              placeholder="Briefly describe the reason for your leave request..."
+              className="w-full px-4 py-2.5 bg-white dark:bg-slate-900/50 border border-black/10 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 transition-all"
+            />
           </div>
         </form>
       </Modal>
