@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import Attendance from './pages/Attendance';
+import Leaves from './pages/Leaves';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="employees" element={<Employees />} />
+              <Route path="leaves" element={<Leaves />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/login" replace />} />

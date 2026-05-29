@@ -730,7 +730,7 @@ app.get('/api/attendance', authenticateToken, async (req: AuthenticatedRequest, 
   }
 });
 
-// Leave API
+// Leave API - Integrated with Leaves overview page
 app.post('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const employeeId = req.user?.id;

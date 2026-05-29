@@ -8,7 +8,8 @@ import {
   Activity,
   Bell,
   Users,
-  Clock
+  Clock,
+  Calendar
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Attendance', path: '/attendance', icon: Clock },
     { name: 'Employees', path: '/employees', icon: Users },
+    { name: 'Leave Requests', path: '/leaves', icon: Calendar },
   ];
 
   const handleLogout = () => {
