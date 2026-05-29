@@ -26,14 +26,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('hrms_token');
-    const storedUser = localStorage.getItem('hrms_user');
-    
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const verifySession = async () => {
+      const storedToken = localStorage.getItem('hrms_token');
+      if (storedToken) {
+        try {
+          const response = await api.get('/auth/me');
+          const employee = response.data;
+          setToken(storedToken);
+          setUser(employee);
+          localStorage.setItem('hrms_user', JSON.stringify(employee));
+        } catch (error) {
+          console.error('Session verification failed:', error);
+          localStorage.removeItem('hrms_token');
+          localStorage.removeItem('hrms_user');
+          setToken(null);
+          setUser(null);
+        }
+      } else {
+        setToken(null);
+        setUser(null);
+      }
+      setIsLoading(false);
+    };
+
+    verifySession();
   }, []);
 
   const login = async (email: string, password: string) => {

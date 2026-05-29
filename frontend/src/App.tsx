@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -20,16 +20,40 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const token = localStorage.getItem('hrms_token');
-  if (!token) {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+          <p className="text-slate-400 text-sm font-medium">Verifying credentials...</p>
+        </div>
+      </div>
+    ); 
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: ProtectedRouteProps) {
-  const token = localStorage.getItem('hrms_token');
-  if (token) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+          <p className="text-slate-400 text-sm font-medium">Verifying credentials...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
