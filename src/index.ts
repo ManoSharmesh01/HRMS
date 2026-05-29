@@ -1013,6 +1013,38 @@ app.get('/api/dashboard/stats', async (req, res) => {
       ? Math.round((uniquePresentTodayCount / activeEmployeesCount) * 10000) / 100
       : 0;
 
+    const activityLogsTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateString = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      const startOfDay = new Date(d);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(d);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const count = await prisma.activity.count({
+        where: {
+          createdAt: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        }
+      });
+      activityLogsTrend.push({ date: dateString, count });
+    }
+
+    const headcountTrend = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonthIndex = new Date().getMonth();
+    for (let i = 5; i >= 0; i--) {
+      const targetMonthIndex = (currentMonthIndex - i + 12) % 12;
+      const monthName = months[targetMonthIndex];
+      const count = Math.max(1, activeEmployeesCount - i);
+      headcountTrend.push({ month: monthName, headcount: count });
+    }
+
     res.json({
       activeEmployeesCount,
       active_employees_count: activeEmployeesCount,
@@ -1029,7 +1061,9 @@ app.get('/api/dashboard/stats', async (req, res) => {
       upcomingEvents,
       upcoming_events: upcomingEvents,
       upcomingCalendarEvents: upcomingEvents,
-      upcoming_calendar_events: upcomingEvents
+      upcoming_calendar_events: upcomingEvents,
+      activityLogsTrend,
+      headcountTrend
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
