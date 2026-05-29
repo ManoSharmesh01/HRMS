@@ -22,14 +22,16 @@ import {
   Clock,
   TrendingUp,
   ClipboardList,
-  AlertCircle,
-  Loader2,
   Bell,
   Activity as ActivityIcon,
   Sparkles,
   PieChart as PieChartIcon,
-  BarChart3
+  BarChart3,
+  RefreshCcw
 } from 'lucide-react';
+import { KPISkeleton, ChartSkeleton, ListSkeleton } from '../components/common/Skeleton';
+import ErrorBanner from '../components/common/ErrorBanner';
+import EmptyState from '../components/common/EmptyState';
 
 interface DashboardStats {
   activeEmployeesCount?: number;
@@ -43,6 +45,7 @@ interface DashboardStats {
     type: string;
     createdAt?: string;
     timestamp?: string;
+    actor?: string;
   }>;
   upcomingEvents?: Array<{
     id: number;
@@ -113,16 +116,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats, isFetching: statsFetching } = useQuery<DashboardStats>({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 15000, // Increased frequency for "real-time" feel
   });
 
-  const { data: charts, isLoading: chartsLoading } = useQuery<DashboardCharts>({
+  const { data: charts, isLoading: chartsLoading, error: chartsError, refetch: refetchCharts } = useQuery<DashboardCharts>({
     queryKey: ['dashboardCharts'],
     queryFn: async () => {
       const response = await api.get('/dashboard/charts');
@@ -131,23 +134,18 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
-  if (statsLoading || chartsLoading) {
-    return (
-      <div className='h-[60vh] flex flex-col items-center justify-center space-y-4'>
-        <Loader2 size={40} className='animate-spin text-indigo-400' />
-        <p className='text-sm text-slate-400 font-medium font-sans'>Retrieving telemetry data...</p>
-      </div>
-    );
-  }
+  const handleRetry = () => {
+    refetchStats();
+    refetchCharts();
+  };
 
-  if (statsError) {
+  if (statsError || chartsError) {
     return (
-      <div className='p-6 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-start space-x-3 max-w-xl mx-auto mt-12'>
-        <AlertCircle size={24} className='shrink-0' />
-        <div>
-          <h3 className='font-semibold text-rose-300'>Connection Failure</h3>
-          <p className='text-sm mt-1'>Unable to load dashboard telemetry. Please ensure the backend microservice is running and accessible.</p>
-        </div>
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <ErrorBanner 
+          message="Unable to load dashboard telemetry. Please ensure the backend microservice is running and accessible."
+          onRetry={handleRetry}
+        />
       </div>
     );
   }
@@ -180,156 +178,173 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className='space-y-8 pb-12'>
-      <div>
-        <h1 className='text-3xl font-bold tracking-tight text-white flex items-center gap-2'>
-          <Sparkles className="text-indigo-400 animate-pulse" size={28} />
-          Consolidated Telemetry
-        </h1>
-        <p className='text-sm text-slate-400 mt-1'>Real-time HR analytics, performance charts, and relative event log snapshot</p>
+    <div className='space-y-8 pb-12 animate-fade-in'>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight text-white flex items-center gap-2'>
+            <Sparkles className="text-indigo-400 animate-pulse" size={28} />
+            Consolidated Telemetry
+          </h1>
+          <p className='text-sm text-slate-400 mt-1'>Real-time HR analytics, performance charts, and relative event log snapshot</p>
+        </div>
+        <button 
+          onClick={() => refetchStats()}
+          className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/10 transition-all"
+        >
+          <RefreshCcw size={14} className={statsFetching ? 'animate-spin' : ''} />
+          Refresh Data
+        </button>
       </div>
 
       {/* KPI Blocks */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-        {kpis.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={idx}
-              className={`p-6 rounded-2xl border bg-gradient-to-br ${stat.color} shadow-glass-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
-            >
-              <div className='flex items-center justify-between'>
-                <span className='text-xs font-semibold tracking-wider text-slate-400 uppercase'>{stat.name}</span>
-                <div className='p-2.5 rounded-xl bg-white/5 border border-white/5'>
-                  <Icon size={18} />
+      {statsLoading ? (
+        <KPISkeleton />
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+          {kpis.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={idx}
+                className={`p-6 rounded-2xl border bg-gradient-to-br ${stat.color} shadow-glass-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+              >
+                <div className='flex items-center justify-between'>
+                  <span className='text-xs font-semibold tracking-wider text-slate-400 uppercase'>{stat.name}</span>
+                  <div className='p-2.5 rounded-xl bg-white/5 border border-white/5'>
+                    <Icon size={18} />
+                  </div>
+                </div>
+                <div className='mt-4 flex items-baseline'>
+                  <span className='text-3xl font-extrabold text-white tracking-tight'>{stat.value}</span>
                 </div>
               </div>
-              <div className='mt-4 flex items-baseline'>
-                <span className='text-3xl font-extrabold text-white tracking-tight'>{stat.value}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Visual Charts Row 1: Trends */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-        {/* Monthly Attendance Trend Chart */}
-        <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
-          <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
-            <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
-              <BarChart3 size={18} className='mr-2 text-indigo-400' />
-              Monthly Attendance Trend
-            </h3>
-            <span className='text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold uppercase'>
-              6 Months (%)
-            </span>
+        {chartsLoading ? <ChartSkeleton /> : (
+          <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
+            <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
+              <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
+                <BarChart3 size={18} className='mr-2 text-indigo-400' />
+                Monthly Attendance Trend
+              </h3>
+              <span className='text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold uppercase'>
+                6 Months (%)
+              </span>
+            </div>
+            <div className='flex-1 min-h-0 w-full'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart data={charts?.attendanceTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="attendanceGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="month" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
+                  <Area type="monotone" dataKey="percentage" name="Attendance" unit="%" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#attendanceGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className='flex-1 min-h-0 w-full'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <AreaChart data={charts?.attendanceTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="attendanceGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="month" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} unit="%" />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
-                <Area type="monotone" dataKey="percentage" name="Attendance" unit="%" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#attendanceGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
 
-        {/* Activity Logs Trend Chart */}
-        <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
-          <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
-            <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
-              <ActivityIcon size={18} className='mr-2 text-emerald-400' />
-              Activity Volume Frequency
-            </h3>
-            <span className='text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-semibold uppercase'>
-              7 Days
-            </span>
+        {statsLoading ? <ChartSkeleton /> : (
+          <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
+            <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
+              <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
+                <ActivityIcon size={18} className='mr-2 text-emerald-400' />
+                Activity Volume Frequency
+              </h3>
+              <span className='text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-semibold uppercase'>
+                7 Days
+              </span>
+            </div>
+            <div className='flex-1 min-h-0 w-full'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart data={stats?.activityLogsTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
+                  <Bar dataKey="count" name="Activity" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className='flex-1 min-h-0 w-full'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={stats?.activityLogsTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="date" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
-                <Bar dataKey="count" name="Activity" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Visual Charts Row 2: Distributions */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-        {/* Department Distribution Chart */}
-        <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
-          <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
-            <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
-              <PieChartIcon size={18} className='mr-2 text-amber-400' />
-              Department Headcount Distribution
-            </h3>
-            <span className='text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-semibold uppercase'>
-              Current
-            </span>
+        {chartsLoading ? <ChartSkeleton /> : (
+          <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
+            <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
+              <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
+                <PieChartIcon size={18} className='mr-2 text-amber-400' />
+                Department Headcount Distribution
+              </h3>
+              <span className='text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-semibold uppercase'>
+                Current
+              </span>
+            </div>
+            <div className='flex-1 min-h-0 w-full'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <PieChart>
+                  <Pie
+                    data={charts?.departmentHeadcount || []}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                    nameKey="name"
+                    stroke="rgba(255,255,255,0.1)"
+                  >
+                    {charts?.departmentHeadcount?.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className='flex-1 min-h-0 w-full'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <PieChart>
-                <Pie
-                  data={charts?.departmentHeadcount}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                  nameKey="name"
-                  stroke="rgba(255,255,255,0.1)"
-                >
-                  {charts?.departmentHeadcount.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
 
-        {/* Leave Distribution Chart */}
-        <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
-          <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
-            <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
-              <ClipboardList size={18} className='mr-2 text-purple-400' />
-              Leave Type Distribution
-            </h3>
-            <span className='text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 font-semibold uppercase'>
-              All Time
-            </span>
+        {chartsLoading ? <ChartSkeleton /> : (
+          <div className='p-6 rounded-2xl glass-panel flex flex-col h-[350px]'>
+            <div className='flex items-center justify-between pb-3 border-b border-white/5 mb-4'>
+              <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
+                <ClipboardList size={18} className='mr-2 text-purple-400' />
+                Leave Type Distribution
+              </h3>
+              <span className='text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 font-semibold uppercase'>
+                All Time
+              </span>
+            </div>
+            <div className='flex-1 min-h-0 w-full'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart data={charts?.leaveDistribution} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
+                  <XAxis type="number" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis dataKey="type" type="category" stroke="rgba(255,255,255,0.4)" fontSize={10} tickLine={false} axisLine={false} width={80} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Leaves" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className='flex-1 min-h-0 w-full'>
-            <ResponsiveContainer width='100%' height='100%'>
-              <BarChart data={charts?.leaveDistribution} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
-                <XAxis type="number" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis dataKey="type" type="category" stroke="rgba(255,255,255,0.4)" fontSize={10} tickLine={false} axisLine={false} width={80} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Leaves" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Lists Section: Recent Activity & Calendar Schedules */}
@@ -339,15 +354,19 @@ export default function Dashboard() {
           <div className='flex items-center justify-between pb-4 border-b border-white/5 mb-4'>
             <h3 className='font-bold text-white tracking-tight flex items-center text-sm md:text-base'>
               <TrendingUp size={18} className='mr-2 text-indigo-400' />
-              Recent Activities Logs
+              Audit Trail & Mutation Logs
             </h3>
             <span className='text-[10px] px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-semibold uppercase'>Real-Time</span>
           </div>
 
           <div className='flex-1 overflow-y-auto space-y-3 pr-1'>
-            {(!stats?.recentActivities || stats.recentActivities.length === 0) ? (
-              <div className='h-full flex items-center justify-center text-slate-500 text-sm font-medium'>
-                No recent activity records found
+            {statsLoading ? <ListSkeleton items={5} /> : (!stats?.recentActivities || stats.recentActivities.length === 0) ? (
+              <div className='h-full flex items-center justify-center'>
+                <EmptyState 
+                  title="No recent activity"
+                  description="There are no activity logs recorded in the system yet."
+                  icon={ActivityIcon}
+                />
               </div>
             ) : (
               stats.recentActivities.map((act) => (
@@ -365,10 +384,10 @@ export default function Dashboard() {
                       <span className='font-bold uppercase tracking-wider text-indigo-400 text-[10px] bg-indigo-400/5 px-2 py-0.5 rounded'>{act.module}</span>
                       <span>•</span>
                       <span className="font-medium text-slate-400">{getRelativeTime(act.createdAt || (act as any).timestamp)}</span>
-                      {(act as any).actor && (
+                      {act.actor && (
                         <>
                           <span>•</span>
-                          <span className="text-emerald-400 font-semibold italic">By: {(act as any).actor}</span>
+                          <span className="text-emerald-400 font-semibold italic truncate">By: {act.actor}</span>
                         </>
                       )}
                     </div>
@@ -390,9 +409,13 @@ export default function Dashboard() {
           </div>
 
           <div className='flex-1 overflow-y-auto space-y-3 pr-1'>
-            {(!stats?.upcomingEvents || stats.upcomingEvents.length === 0) ? (
-              <div className='h-full flex items-center justify-center text-slate-500 text-sm font-medium'>
-                No upcoming events scheduled
+            {statsLoading ? <ListSkeleton items={5} /> : (!stats?.upcomingEvents || stats.upcomingEvents.length === 0) ? (
+              <div className='h-full flex items-center justify-center'>
+                <EmptyState 
+                  title="No upcoming events"
+                  description="The corporate calendar is currently empty. Check back later for updates."
+                  icon={Calendar}
+                />
               </div>
             ) : (
               stats.upcomingEvents.map((event) => (

@@ -45,7 +45,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
   });
 };
 
-// Activity Logger Middleware (Automatic Audit Trails)
+// Activity Logger Middleware (Enhanced Audit Trails)
 const activityLogger = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const originalJson = res.json;
   const originalSend = res.send;
@@ -56,7 +56,7 @@ const activityLogger = async (req: AuthenticatedRequest, res: Response, next: Ne
     if (logged) return;
     
     const { method, url, user } = req;
-    const isMutation = ['POST', 'PUT', 'DELETE'].includes(method);
+    const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
     const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
     const isNotLogRoute = !url.includes('/api/dashboard/stats') && !url.includes('/api/activity');
 
@@ -73,11 +73,26 @@ const activityLogger = async (req: AuthenticatedRequest, res: Response, next: Ne
       if (method === 'POST') actionVerb = 'created';
       if (method === 'PUT') actionVerb = 'updated';
       if (method === 'DELETE') actionVerb = 'deleted';
+      if (method === 'PATCH') actionVerb = 'updated status of';
 
       const actor = user ? `${user.email}` : 'System';
       const actorRole = user ? ` (${user.role})` : '';
       
-      const message = `${actor}${actorRole} ${actionVerb} a record in ${module}.`;
+      let detail = '';
+      try {
+        if (data && typeof data === 'object') {
+          if (data.name) detail = ` named "${data.name}"`;
+          else if (data.email) detail = ` for "${data.email}"`;
+          else if (data.type) detail = ` of type "${data.type}"`;
+          else if (data.id) detail = ` with ID #${data.id}`;
+          
+          if (url.includes('/api/leaves') && data.status) {
+             detail += ` to "${data.status}"`;
+          }
+        }
+      } catch (e) {}
+
+      const message = `${actor}${actorRole} ${actionVerb} a ${module.toLowerCase()} record${detail}.`;
       
       try {
         await prisma.activity.create({
@@ -100,7 +115,12 @@ const activityLogger = async (req: AuthenticatedRequest, res: Response, next: Ne
   };
 
   res.send = function(body) {
-    logAction(body);
+    try {
+       const parsed = JSON.parse(body);
+       logAction(parsed);
+    } catch (e) {
+       logAction(body);
+    }
     return originalSend.call(this, body);
   };
 
@@ -186,11 +206,66 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const employee = await prisma.employee.findUnique({ where: { id: req.user!.id } });
+    if (!employee) return res.status(404).json({ error: 'User not found' });
+    const { password: _, ...rest } = employee;
+    res.json(rest);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Employee Routes
 app.get('/api/employees', authenticateToken, async (req, res) => {
   try {
-    const employees = await prisma.employee.findMany({ select: { id: true, name: true, email: true, role: true, department: true, salary: true, status: true } });
-    res.json(employees);
+    const { search, department, role, status, page = 1, limit = 10 } = req.query as any;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    const where: any = {};
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { email: { contains: search } },
+      ];
+    }
+    if (department) where.department = department;
+    if (role) where.role = role;
+    if (status) where.status = status;
+
+    const [employees, total] = await prisma.$transaction([
+      prisma.employee.findMany({
+        where,
+        skip,
+        take,
+        select: { id: true, name: true, email: true, role: true, department: true, salary: true, status: true },
+        orderBy: { id: 'desc' }
+      }),
+      prisma.employee.count({ where })
+    ]);
+
+    res.json({ data: employees, total });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/employees', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, password, role, department, salary, status } = req.body;
+    const existing = await prisma.employee.findUnique({ where: { email } });
+    if (existing) return res.status(400).json({ error: 'Email exists' });
+
+    const hashedPassword = await bcrypt.hash(password || 'password123', 10);
+    const employee = await prisma.employee.create({
+      data: {
+        name, email, password: hashedPassword, 
+        role: role.toUpperCase(), 
+        department, 
+        salary: parseFloat(salary) || 0, 
+        status: status || 'ACTIVE'
+      }
+    });
+    const { password: _, ...rest } = employee;
+    res.status(201).json(rest);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
@@ -204,14 +279,73 @@ app.put('/api/employees/:id', authenticateToken, async (req, res) => {
 app.delete('/api/employees/:id', authenticateToken, async (req, res) => {
   try {
     await prisma.employee.delete({ where: { id: parseInt(req.params.id) } });
-    res.json({ message: 'Deleted' });
+    res.json({ message: 'Deleted', id: req.params.id });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 // Attendance Routes
+app.get('/api/attendance/today', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const record = await prisma.attendance.findFirst({
+      where: {
+        employeeId: req.user!.id,
+        date: { gte: today, lt: tomorrow }
+      },
+      orderBy: { date: 'desc' }
+    });
+
+    res.json({
+      checkedIn: !!record,
+      checkedOut: !!(record && record.checkOut),
+      record
+    });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/attendance/history', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const history = await prisma.attendance.findMany({
+      where: { employeeId: req.user!.id },
+      orderBy: { date: 'desc' }
+    });
+    res.json(history);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/attendance/check-in', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const att = await prisma.attendance.create({ data: { employeeId: req.user!.id, checkIn: new Date(), status: 'Present' } });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Check for existing record today
+    const existing = await prisma.attendance.findFirst({
+      where: {
+        employeeId: req.user!.id,
+        date: { gte: today, lt: tomorrow }
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Already checked in today' });
+    }
+
+    const now = new Date();
+    const status = now.getHours() >= 9 && now.getMinutes() > 0 ? 'Late' : 'Present';
+    
+    const att = await prisma.attendance.create({ 
+      data: { 
+        employeeId: req.user!.id, 
+        checkIn: now, 
+        status 
+      } 
+    });
     res.status(201).json(att);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -220,7 +354,15 @@ app.post('/api/attendance/check-out', authenticateToken, async (req: Authenticat
   try {
     const latest = await prisma.attendance.findFirst({ where: { employeeId: req.user!.id, checkOut: null }, orderBy: { date: 'desc' } });
     if (!latest) return res.status(404).json({ error: 'No active check-in' });
-    const updated = await prisma.attendance.update({ where: { id: latest.id }, data: { checkOut: new Date() } });
+    
+    const checkOut = new Date();
+    const diffMs = checkOut.getTime() - latest.checkIn.getTime();
+    const totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+
+    const updated = await prisma.attendance.update({
+      where: { id: latest.id },
+      data: { checkOut, totalHours }
+    });
     res.json(updated);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -228,7 +370,16 @@ app.post('/api/attendance/check-out', authenticateToken, async (req: Authenticat
 // Leave Routes
 app.post('/api/leaves', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const leave = await prisma.leave.create({ data: { ...req.body, employeeId: req.user!.id, status: 'PENDING', startDate: new Date(req.body.startDate), endDate: new Date(req.body.endDate) } });
+    const leave = await prisma.leave.create({
+      data: {
+        type: req.body.category,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
+        reason: req.body.justification,
+        status: 'PENDING',
+        employeeId: req.user!.id
+      }
+    });
     res.status(201).json(leave);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -247,8 +398,31 @@ app.put('/api/leaves/:id', authenticateToken, async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+app.patch('/api/leaves/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const updated = await prisma.leave.update({ where: { id: parseInt(req.params.id) }, data: { status: req.body.status } });
+    res.json(updated);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Activity Routes
+app.get('/api/activity', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query as any;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
+
+    const [activities, total] = await prisma.$transaction([
+      prisma.activity.findMany({ skip, take, orderBy: { createdAt: 'desc' } }),
+      prisma.activity.count()
+    ]);
+
+    res.json({ data: activities, total });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // Dashboard Stats
-app.get('/api/dashboard/stats', async (req, res) => {
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
     const [empCount, leaveCount, eventCount, activities, events] = await prisma.$transaction([
       prisma.employee.count({ where: { status: 'ACTIVE' } }),

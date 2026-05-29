@@ -8,18 +8,17 @@ import {
   Plus,
   Check,
   X,
-  Loader2,
-  AlertCircle,
   Clock,
-  Info,
-  FileText,
   CheckCircle,
   XCircle,
-  HelpCircle,
   ClipboardList,
   Sparkles,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
+import { KPISkeleton, TableSkeleton, Button, Modal, Card, Input, Badge } from '../components/common';
+import ErrorBanner from '../components/common/ErrorBanner';
+import EmptyState from '../components/common/EmptyState';
 
 interface LeaveRequest {
   id: number;
@@ -263,8 +262,19 @@ export default function Leaves() {
     }
   };
 
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <ErrorBanner 
+          message="Unable to load leave submissions. Please retry shortly."
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -277,20 +287,19 @@ export default function Leaves() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            variant="secondary"
             onClick={handleExport}
-            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all duration-200 shrink-0"
+            leftIcon={<Download size={18} />}
           >
-            <Download size={18} className="mr-2" />
             Export CSV
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg hover:shadow-indigo-500/20 transition-all duration-200 shrink-0 border border-indigo-500/30"
+            leftIcon={<Plus size={18} />}
           >
-            <Plus size={18} className="mr-2" />
             Apply For Leave
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -300,34 +309,39 @@ export default function Leaves() {
           <ClipboardList size={18} className="mr-2 text-indigo-400" />
           Your Annual Allowances & Balance
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {balances.map((bal, idx) => (
-            <div
-              key={idx}
-              className={`p-6 rounded-2xl border bg-gradient-to-br ${bal.color} shadow-glass-sm transition-all duration-300 hover:scale-[1.02]`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
-                  {bal.category}
-                </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-slate-300">
-                  Total: {bal.allowance} Days
-                </span>
-              </div>
-              <div className="mt-4 flex justify-between items-baseline">
-                <div>
-                  <span className="text-3xl font-extrabold text-white tracking-tight">
-                    {bal.remaining}
-                  </span>
-                  <span className="text-xs text-slate-400 ml-1">days remaining</span>
+        {isLoading ? <KPISkeleton /> : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {balances.map((bal, idx) => (
+              <Card
+                key={idx}
+                className={`bg-gradient-to-br ${bal.color} shadow-glass-sm transition-all duration-300 hover:scale-[1.02]`}
+                noPadding
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                      {bal.category}
+                    </span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-slate-300">
+                      Total: {bal.allowance} Days
+                    </span>
+                  </div>
+                  <div className="mt-4 flex justify-between items-baseline">
+                    <div>
+                      <span className="text-3xl font-extrabold text-white tracking-tight">
+                        {bal.remaining}
+                      </span>
+                      <span className="text-xs text-slate-400 ml-1">days remaining</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-slate-300 block">{bal.used} used</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-sm font-semibold text-slate-300 block">{bal.used} used</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filters and Matrix list */}
@@ -384,27 +398,15 @@ export default function Leaves() {
 
         {/* Leaves Table */}
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="animate-spin text-indigo-400" size={32} />
-            <p className="text-xs text-slate-400 font-medium">Loading leave matrices...</p>
-          </div>
-        ) : error ? (
-          <div className="py-12 px-6 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400 flex items-start space-x-3 max-w-xl mx-auto my-6">
-            <AlertCircle size={24} className="shrink-0" />
-            <div>
-              <h3 className="font-semibold text-rose-300">Connection Error</h3>
-              <p className="text-sm mt-1">Unable to load leave submissions. Please retry shortly.</p>
-            </div>
-          </div>
+          <TableSkeleton rows={6} />
         ) : filteredLeaves.length === 0 ? (
-          <div className="py-20 flex flex-col items-center justify-center space-y-4 text-center">
-            <Calendar size={48} className="text-slate-600 stroke-[1.5]" />
-            <div>
-              <p className="text-sm font-semibold text-slate-300">No leave requests found</p>
-              <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                No leave requests match the selected filters or there are no submissions yet.
-              </p>
-            </div>
+          <div className="py-20">
+            <EmptyState 
+              title="No leave requests found"
+              description="No leave requests match the selected filters or there are no submissions yet in the ledger."
+              icon={Calendar}
+              onClear={statusFilter !== 'ALL' || typeFilter !== 'ALL' ? () => { setStatusFilter('ALL'); setTypeFilter('ALL'); } : undefined}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -492,132 +494,80 @@ export default function Leaves() {
       </div>
 
       {/* Submission Modal Form */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div
-            className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl transition-all"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center">
-                <Calendar size={18} className="mr-2 text-indigo-400" />
-                Submit New Leave Application
-              </h3>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setValidationError(null);
-                }}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <X size={18} />
-              </button>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Submit Leave Request"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+              Discard
+            </Button>
+            <Button
+              onClick={(e) => handleFormSubmit(e as any)}
+              isLoading={createLeaveMutation.isPending}
+              leftIcon={<Check size={18} />}
+            >
+              Send Request
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleFormSubmit} className="space-y-5">
+          {validationError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold flex items-center">
+              <XCircle size={16} className="mr-2 shrink-0" />
+              {validationError}
             </div>
+          )}
 
-            {/* Modal Body */}
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
-              {validationError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-start space-x-2 text-xs">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                  <span>{validationError}</span>
-                </div>
-              )}
-
-              {/* Category selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Leave Category <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                >
-                  <option value="Annual Leave">Annual Leave</option>
-                  <option value="Sick Leave">Sick Leave</option>
-                  <option value="Casual Leave">Casual Leave</option>
-                  <option value="Maternity Leave">Maternity Leave</option>
-                  <option value="Paternity Leave">Paternity Leave</option>
-                  <option value="Unpaid Leave">Unpaid Leave</option>
-                </select>
-              </div>
-
-              {/* Dates grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    Start Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    End Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Duration display */}
-              <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-between">
-                <div className="flex items-center text-xs text-indigo-300 font-medium">
-                  <Info size={14} className="mr-2 text-indigo-400" />
-                  Calculated Leave Duration
-                </div>
-                <span className="text-sm font-bold text-white">
-                  {calculateDays(formData.startDate, formData.endDate)} Working Days
-                </span>
-              </div>
-
-              {/* Justification */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                  Reason / Justification <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.justification}
-                  onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
-                  placeholder="Please provide a brief reason for your leave request..."
-                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                />
-              </div>
-
-              {/* Modal Actions */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createLeaveMutation.isPending}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 disabled:opacity-50 flex items-center"
-                >
-                  {createLeaveMutation.isPending && (
-                    <Loader2 size={16} className="animate-spin mr-2" />
-                  )}
-                  Submit Application
-                </button>
-              </div>
-            </form>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Leave Category
+            </label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="Annual Leave">Annual Leave</option>
+              <option value="Sick Leave">Sick Leave</option>
+              <option value="Casual Leave">Casual Leave</option>
+              <option value="Maternity Leave">Maternity Leave</option>
+              <option value="Paternity Leave">Paternity Leave</option>
+              <option value="Unpaid Leave">Unpaid Leave</option>
+            </select>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Start Date"
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+            />
+            <Input
+              label="End Date"
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Reason / Justification
+            </label>
+            <textarea
+              rows={3}
+              value={formData.justification}
+              onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+              placeholder="Provide a brief explanation for your leave request..."
+              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+            ></textarea>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

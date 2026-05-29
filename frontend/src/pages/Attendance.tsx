@@ -8,16 +8,17 @@ import {
   UserMinus,
   AlertCircle,
   Calendar,
-  History,
   CheckCircle,
   TrendingUp,
   RefreshCw,
   Search,
-  Filter,
-  ArrowRight,
   Sparkles,
-  Download
+  Download,
+  History
 } from 'lucide-react';
+import { KPISkeleton, TableSkeleton, Button, Card, Badge } from '../components/common';
+import ErrorBanner from '../components/common/ErrorBanner';
+import EmptyState from '../components/common/EmptyState';
 
 interface AttendanceRecord {
   id: number;
@@ -52,7 +53,7 @@ export default function Attendance() {
   }, []);
 
   // Fetch today's check-in status
-  const { data: todayData, isLoading: todayLoading, refetch: refetchToday } = useQuery<TodayResponse>({
+  const { data: todayData, isLoading: todayLoading, isError: todayError, refetch: refetchToday } = useQuery<TodayResponse>({
     queryKey: ['attendanceToday'],
     queryFn: async () => {
       const response = await api.get('/attendance/today');
@@ -61,7 +62,7 @@ export default function Attendance() {
   });
 
   // Fetch personal check-in history
-  const { data: historyData, isLoading: historyLoading, refetch: refetchHistory } = useQuery<AttendanceRecord[]>({
+  const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useQuery<AttendanceRecord[]>({
     queryKey: ['attendanceHistory'],
     queryFn: async () => {
       const response = await api.get('/attendance/history');
@@ -225,8 +226,19 @@ export default function Attendance() {
   const isCheckingIn = checkInMutation.isPending;
   const isCheckingOut = checkOutMutation.isPending;
 
+  if (todayError || historyError) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <ErrorBanner 
+          message="Unable to load attendance synchronization data. Please check your network connectivity."
+          onRetry={forceRefetch}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in pb-12">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -286,7 +298,7 @@ export default function Attendance() {
         
         {/* Active Clock Controls widget (Left/Top 5 cols) */}
         <div className="lg:col-span-5 flex flex-col space-y-6">
-          <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/60 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[360px]">
+          <Card className="bg-slate-900/60 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[360px]" noPadding>
             {/* Background glowing circle */}
             <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-500/10 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none" />
 
@@ -303,7 +315,7 @@ export default function Attendance() {
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse'
                     : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                 }`}>
-                  {todayData?.checkedOut
+                  {todayLoading ? 'Syncing...' : todayData?.checkedOut
                     ? 'Completed Today'
                     : todayData?.checkedIn
                     ? 'Currently Logged In'
@@ -334,131 +346,129 @@ export default function Attendance() {
             </div>
 
             {/* Controls */}
-            <div className="relative z-10 pt-6 mt-4 border-t border-white/5 flex gap-4">
+            <div className="relative z-10 pt-6 mt-4 border-t border-white/5 flex gap-4 px-6 pb-6">
               {!todayData?.checkedIn ? (
-                <button
+                <Button
                   onClick={handleCheckIn}
-                  disabled={isCheckingIn || todayLoading}
-                  className="flex-1 flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-bold bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all duration-200"
+                  isLoading={isCheckingIn}
+                  disabled={todayLoading}
+                  className="flex-1"
+                  leftIcon={<UserCheck size={16} />}
                 >
-                  {isCheckingIn ? (
-                    <RefreshCw className="animate-spin mr-2" size={16} />
-                  ) : (
-                    <UserCheck className="mr-2" size={16} />
-                  )}
                   Clock In Now
-                </button>
+                </Button>
               ) : !todayData?.checkedOut ? (
-                <button
+                <Button
                   onClick={handleCheckOut}
-                  disabled={isCheckingOut || todayLoading}
-                  className="flex-1 flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-bold bg-rose-500 hover:bg-rose-600 disabled:bg-rose-500/50 text-white shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 transition-all duration-200"
+                  isLoading={isCheckingOut}
+                  disabled={todayLoading}
+                  variant="danger"
+                  className="flex-1"
+                  leftIcon={<UserMinus size={16} />}
                 >
-                  {isCheckingOut ? (
-                    <RefreshCw className="animate-spin mr-2" size={16} />
-                  ) : (
-                    <UserMinus className="mr-2" size={16} />
-                  )}
                   Clock Out Now
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   disabled
-                  className="flex-1 flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-bold bg-white/5 border border-white/10 text-slate-400 cursor-not-allowed"
+                  variant="secondary"
+                  className="flex-1 cursor-not-allowed"
+                  leftIcon={<CheckCircle className="text-slate-500" size={16} />}
                 >
-                  <CheckCircle className="mr-2 text-slate-500" size={16} />
                   Shift Closed Today
-                </button>
+                </Button>
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Status Panels (Right 7 cols) */}
         <div className="lg:col-span-7 flex flex-col space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-            {/* Status Panel: Today's Status */}
-            <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
-              <div className={`p-3 rounded-xl ${
-                todayData?.checkedIn
-                  ? todayData.record?.status === 'Late'
-                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
-                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
-                  : 'bg-slate-500/10 text-slate-400 border border-white/5'
-              }`}>
-                <UserCheck size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Today's Status</p>
-                <p className="text-lg font-bold text-white mt-1">
-                  {todayLoading
-                    ? 'Loading...'
-                    : todayData?.checkedIn
+          {historyLoading ? <KPISkeleton /> : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              
+              {/* Status Panel: Today's Status */}
+              <Card className="flex items-start space-x-4 p-5" noPadding>
+                <div className={`p-3 rounded-xl ${
+                  todayData?.checkedIn
                     ? todayData.record?.status === 'Late'
-                      ? 'Present (Late)'
-                      : 'Present (On-Time)'
-                    : 'Not Checked-In'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {todayData?.checkedIn ? 'Your shift status for today' : 'No attendance record registered yet'}
-                </p>
-              </div>
-            </div>
+                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+                    : 'bg-slate-500/10 text-slate-400 border border-white/5'
+                }`}>
+                  <UserCheck size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Today's Status</p>
+                  <p className="text-lg font-bold text-white mt-1">
+                    {todayLoading
+                      ? 'Loading...'
+                      : todayData?.checkedIn
+                      ? todayData.record?.status === 'Late'
+                        ? 'Present (Late)'
+                        : 'Present (On-Time)'
+                      : 'Not Checked-In'}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {todayData?.checkedIn ? 'Your shift status for today' : 'No attendance record registered yet'}
+                  </p>
+                </div>
+              </Card>
 
-            {/* Status Panel: Worked Hours (Total/Avg) */}
-            <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
-              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/25">
-                <TrendingUp size={20} />
+              {/* Status Panel: Worked Hours (Total/Avg) */}
+              <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
+                <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/25">
+                  <TrendingUp size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Shift Hours</p>
+                  <p className="text-lg font-bold text-white mt-1">
+                    {averageHours} hrs
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Across {totalDays} registered work days
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Average Shift Hours</p>
-                <p className="text-lg font-bold text-white mt-1">
-                  {averageHours} hrs
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Across {totalDays} registered work days
-                </p>
-              </div>
-            </div>
 
-            {/* Status Panel: First Check-In */}
-            <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
-              <div className="p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/25">
-                <Calendar size={20} />
+              {/* Status Panel: First Check-In */}
+              <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
+                <div className="p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/25">
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check-In Time</p>
+                  <p className="text-lg font-bold text-white mt-1">
+                    {todayData?.record?.checkIn
+                      ? new Date(todayData.record.checkIn).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+                      : '--:--'}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {todayData?.record?.checkIn ? 'Check-in timestamp recorded' : 'Waiting for clock-in'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Check-In Time</p>
-                <p className="text-lg font-bold text-white mt-1">
-                  {todayData?.record?.checkIn
-                    ? new Date(todayData.record.checkIn).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-                    : '--:--'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {todayData?.record?.checkIn ? 'Check-in timestamp recorded' : 'Waiting for clock-in'}
-                </p>
-              </div>
-            </div>
 
-            {/* Status Panel: Lateness Days */}
-            <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
-              <div className={`p-3 rounded-xl ${
-                lateDays > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
-              }`}>
-                <AlertCircle size={20} />
+              {/* Status Panel: Lateness Days */}
+              <div className="glass-panel p-5 rounded-2xl border border-white/5 bg-slate-900/40 flex items-start space-x-4">
+                <div className={`p-3 rounded-xl ${
+                  lateDays > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25'
+                }`}>
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lateness Rate</p>
+                  <p className="text-lg font-bold text-white mt-1">
+                    {totalDays > 0 ? ((lateDays / totalDays) * 100).toFixed(0) : 0}% 
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {lateDays} out of {totalDays} shifts marked late
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lateness Rate</p>
-                <p className="text-lg font-bold text-white mt-1">
-                  {totalDays > 0 ? ((lateDays / totalDays) * 100).toFixed(0) : 0}% 
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  {lateDays} out of {totalDays} shifts marked late
-                </p>
-              </div>
-            </div>
 
-          </div>
+            </div>
+          )}
 
           {/* Guidelines info card */}
           <div className="p-5 rounded-2xl border border-indigo-500/10 bg-indigo-500/5 text-indigo-300 text-xs flex items-start space-x-3 leading-relaxed">
@@ -466,131 +476,103 @@ export default function Attendance() {
             <div>
               <p className="font-bold text-indigo-200">Company Attendance Policy</p>
               <p className="mt-1 text-slate-400">
-                Core office hours begin at <strong className="text-indigo-200">9:00 AM</strong>. Check-ins recorded after this time will automatically be marked with a <span className="text-amber-400 font-bold">Late</span> status. Please remember to clock out when wrapping up your shift to guarantee correct calculation of your total billable work hours.
+                Core office hours begin at <strong className="text-indigo-200">9:00 AM</strong>. Check-ins recorded after this time will automatically be marked with a <span className="text-amber-400 font-bold italic">Late</span> status. Ensure you clock out before leaving the premises to finalize your daily shift duration telemetry.
               </p>
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* History Log Section */}
-      <div className="glass-panel p-6 rounded-2xl border border-white/5 bg-slate-900/40 shadow-xl space-y-6">
-        
-        {/* Header and Filters */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-indigo-400">
-              <History size={18} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Chronological Tracking History</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Chronological record of your personal clock-in and clock-out cycles.</p>
-            </div>
+      {/* History Table Workspace */}
+      <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
+        <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-950/20">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <History size={18} className="text-indigo-400" />
+              Attendance Logs History
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">Chronological record of your work sessions and shift status.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Search Input */}
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by date or status..."
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input 
+                type="text" 
+                placeholder="Search logs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-slate-950/40 border border-white/10 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                className="pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors w-44"
               />
             </div>
-
-            {/* Filter Select */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-950/40 border border-white/10 rounded-xl">
-              <Filter size={12} className="text-slate-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-transparent text-xs text-slate-300 focus:outline-none cursor-pointer"
-              >
-                <option value="ALL" className="bg-slate-900">All Statuses</option>
-                <option value="PRESENT" className="bg-slate-900">Present</option>
-                <option value="LATE" className="bg-slate-900">Late</option>
-              </select>
-            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="ALL">All Status</option>
+              <option value="PRESENT">Present</option>
+              <option value="LATE">Late</option>
+            </select>
           </div>
         </div>
 
-        {/* Table View */}
-        <div className="overflow-x-auto">
-          {historyLoading ? (
-            <div className="py-20 flex flex-col items-center justify-center">
-              <RefreshCw className="animate-spin text-indigo-400 mb-3" size={24} />
-              <p className="text-xs text-slate-500">Fetching your records...</p>
-            </div>
-          ) : filteredHistory.length === 0 ? (
-            <div className="py-20 flex flex-col items-center justify-center text-center">
-              <History size={40} className="text-slate-700 mb-3" />
-              <p className="text-sm font-semibold text-slate-400">No history records found</p>
-              <p className="text-xs text-slate-600 mt-1">Try adjusting your filters or search query.</p>
-            </div>
-          ) : (
+        {historyLoading ? <TableSkeleton rows={6} /> : filteredHistory.length === 0 ? (
+          <div className="py-20">
+            <EmptyState 
+              title="No attendance logs found"
+              description="Your chronological work session history is currently empty or no records match your filters."
+              icon={Calendar}
+              onClear={searchQuery || statusFilter !== 'ALL' ? () => { setSearchQuery(''); setStatusFilter('ALL'); } : undefined}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                  <th className="pb-4 px-4">Date</th>
-                  <th className="pb-4 px-4 text-center">Clock In</th>
-                  <th className="pb-4 px-4 text-center">Clock Out</th>
-                  <th className="pb-4 px-4 text-center">Duration</th>
-                  <th className="pb-4 px-4 text-right">Work Status</th>
+                <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5">
+                  <th className="px-6 py-4">Date Index</th>
+                  <th className="px-6 py-4">Status Matrix</th>
+                  <th className="px-6 py-4">Check-In</th>
+                  <th className="px-6 py-4">Check-Out</th>
+                  <th className="px-6 py-4">Shift Duration</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredHistory.map((record) => (
-                  <tr key={record.id} className="group hover:bg-white/5 transition-colors">
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400">
-                          <Calendar size={14} />
-                        </div>
-                        <span className="text-sm font-semibold text-slate-200">
-                          {new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
+                  <tr key={record.id} className="text-sm hover:bg-white/5 transition-colors group">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-slate-200">{new Date(record.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="text-[10px] text-slate-500">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'long' })}</p>
                     </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="text-xs font-mono text-slate-400">
-                        {new Date(record.checkIn).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {record.checkOut ? (
-                        <span className="text-xs font-mono text-slate-400">
-                          {new Date(record.checkOut).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                          Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="text-xs font-bold text-slate-300">
-                        {record.totalHours ? `${record.totalHours.toFixed(2)} hrs` : '--'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md border ${
                         record.status?.toUpperCase() === 'LATE'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       }`}>
                         {record.status?.toUpperCase()}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-400 font-mono">
+                      {new Date(record.checkIn).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </td>
+                    <td className="px-6 py-4 text-slate-400 font-mono">
+                      {record.checkOut 
+                        ? new Date(record.checkOut).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                        : <span className="text-emerald-400/80 italic">Active Session</span>}
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-extrabold text-indigo-300">
+                        {record.totalHours ? `${record.totalHours.toFixed(2)} hrs` : '--'}
+                      </p>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

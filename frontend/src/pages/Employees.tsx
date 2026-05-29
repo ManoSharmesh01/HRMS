@@ -10,7 +10,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  Loader2,
   X,
   User,
   Mail,
@@ -24,8 +23,12 @@ import {
   Calendar,
   CheckCircle,
   FileText,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
+import { TableSkeleton, Button, Modal, Input, Badge, Card } from '../components/common';
+import ErrorBanner from '../components/common/ErrorBanner';
+import EmptyState from '../components/common/EmptyState';
 
 interface Employee {
   id: number;
@@ -430,38 +433,19 @@ export default function Employees() {
 
       {/* Main Employee List */}
       {isLoading ? (
-        <div className="h-[40vh] flex flex-col items-center justify-center space-y-4">
-          <Loader2 size={36} className="animate-spin text-indigo-400" />
-          <p className="text-sm text-slate-400">Loading directory listings...</p>
-        </div>
+        <TableSkeleton rows={limit} />
       ) : error ? (
-        <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-start space-x-3">
-          <AlertCircle size={22} className="shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-rose-300">Connection Error</h3>
-            <p className="text-sm mt-0.5">Could not fetch employee list. Please ensure the backend is running and you have sufficient permissions.</p>
-          </div>
-        </div>
+        <ErrorBanner 
+          message="Could not fetch employee list. Please ensure the backend is running and you have sufficient permissions."
+          onRetry={() => refetch()}
+        />
       ) : employees.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl glass-panel space-y-4">
-          <div className="p-4 bg-slate-950/40 rounded-full border border-white/5 text-indigo-400">
-            <User size={36} className="opacity-60" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-200">No Employees Found</h3>
-            <p className="text-sm text-slate-400 max-w-sm mt-1 mx-auto">
-              We couldn't find any staff profiles matching the active filters or search terms.
-            </p>
-          </div>
-          {(search || department || role || status) && (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 text-sm font-semibold text-indigo-300 hover:text-white hover:bg-indigo-500/10 border border-indigo-500/20 hover:border-indigo-500/30 rounded-xl transition-all"
-            >
-              Clear All Filters
-            </button>
-          )}
-        </div>
+        <EmptyState 
+          title="No Employees Found"
+          description="We couldn't find any staff profiles matching the active filters or search terms."
+          icon={User}
+          onClear={(search || department || role || status) ? clearFilters : undefined}
+        />
       ) : (
         /* Grid and Table Containers */
         <div className="glass-panel rounded-2xl overflow-hidden border border-white/5">
@@ -501,47 +485,46 @@ export default function Employees() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-300">{emp.department}</td>
+                    <td className="px-6 py-4">{emp.department}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${getRoleBadgeStyle(emp.role)}`}>
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getRoleBadgeStyle(emp.role)}`}>
                         {emp.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-medium text-slate-200">
-                      ${emp.salary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
+                    <td className="px-6 py-4 font-mono text-indigo-300">${emp.salary.toLocaleString()}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeStyle(emp.status)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${emp.status.toUpperCase() === 'ACTIVE' ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
                         {emp.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-1">
-                      <button
-                        onClick={() => handleViewClick(emp)}
-                        title="View Profile"
-                        className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/5 inline-flex items-center"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      {canModify && (
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleEditClick(emp)}
-                          title="Edit Employee"
-                          className="p-2 text-slate-400 hover:text-amber-400 hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/5 inline-flex items-center"
+                          onClick={() => handleViewClick(emp)}
+                          className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                          title="View Profile"
                         >
-                          <Edit size={16} />
+                          <Eye size={16} />
                         </button>
-                      )}
-                      {canDelete && (
-                        <button
-                          onClick={() => handleDeleteClick(emp.id)}
-                          title="Delete Employee"
-                          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-colors border border-transparent hover:border-white/5 inline-flex items-center"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
+                        {canModify && (
+                          <button
+                            onClick={() => handleEditClick(emp)}
+                            className="p-2 text-indigo-400 hover:text-white hover:bg-indigo-500/20 rounded-lg transition-colors"
+                            title="Edit Employee"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteClick(emp.id)}
+                            className="p-2 text-rose-400 hover:text-white hover:bg-rose-500/20 rounded-lg transition-colors"
+                            title="Delete Employee"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -549,59 +532,62 @@ export default function Employees() {
             </table>
           </div>
 
-          {/* Grid View (for smaller screens) */}
-          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-px bg-white/5">
+          {/* Mobile View (Grid Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden p-4">
             {employees.map((emp) => (
-              <div key={emp.id} className="p-6 bg-slate-900 flex flex-col space-y-4 hover:bg-slate-800/80 transition-colors">
+              <div
+                key={emp.id}
+                className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-4"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="h-12 w-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
                       {emp.name.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-bold text-white">{emp.name}</h4>
+                      <p className="font-bold text-white">{emp.name}</p>
                       <p className="text-xs text-slate-400">{emp.email}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
+                  <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getStatusBadgeStyle(emp.status)}`}>
                     {emp.status}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Department</p>
-                    <p className="text-sm text-slate-300">{emp.department}</p>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded-lg bg-white/5">
+                    <p className="text-slate-500 uppercase font-bold text-[9px]">Department</p>
+                    <p className="text-slate-200 mt-0.5">{emp.department}</p>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role</p>
-                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${getRoleBadgeStyle(emp.role)}`}>
-                      {emp.role}
-                    </span>
+                  <div className="p-2 rounded-lg bg-white/5">
+                    <p className="text-slate-500 uppercase font-bold text-[9px]">Role</p>
+                    <p className="text-slate-200 mt-0.5">{emp.role}</p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-4">
-                  <p className="text-lg font-bold text-white">${emp.salary.toLocaleString()}</p>
-                  <div className="flex gap-1">
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <p className="font-mono text-indigo-300">${emp.salary.toLocaleString()}</p>
+                  <div className="flex space-x-1">
                     <button
                       onClick={() => handleViewClick(emp)}
-                      className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
+                      className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
                     >
-                      <Eye size={18} />
+                      <Eye size={16} />
                     </button>
                     {canModify && (
                       <button
                         onClick={() => handleEditClick(emp)}
-                        className="p-2 text-slate-400 hover:text-amber-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
+                        className="p-2 text-indigo-400 hover:text-white rounded-lg transition-colors"
                       >
-                        <Edit size={18} />
+                        <Edit size={16} />
                       </button>
                     )}
                     {canDelete && (
                       <button
                         onClick={() => handleDeleteClick(emp.id)}
-                        className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-all border border-white/5"
+                        className="p-2 text-rose-400 hover:text-white rounded-lg transition-colors"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
@@ -611,37 +597,25 @@ export default function Employees() {
           </div>
 
           {/* Pagination Footer */}
-          <div className="px-6 py-4 bg-slate-950/20 border-t border-white/5 flex items-center justify-between">
-            <p className="text-xs text-slate-400 font-medium">
-              Showing <span className="text-slate-200">{employees.length}</span> of <span className="text-slate-200">{total}</span> staff profiles
+          <div className="px-6 py-4 bg-slate-950/20 border-t border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <p className="text-xs text-slate-400">
+              Showing <span className="text-white font-bold">{employees.length}</span> of <span className="text-white font-bold">{total}</span> total staff entries
             </p>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
-                disabled={page <= 1}
-                onClick={() => setPage(prev => prev - 1)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/5 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50 transition-all"
               >
                 Previous
               </button>
-              <div className="flex items-center space-x-1 mx-2">
-                {Array.from({ length: Math.ceil(total / limit) }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                      page === i + 1
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+              <div className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+                Page {page}
               </div>
               <button
-                disabled={page >= Math.ceil(total / limit)}
-                onClick={() => setPage(prev => prev + 1)}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/5 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                disabled={page * limit >= total}
+                onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 disabled:opacity-50 transition-all"
               >
                 Next
               </button>
@@ -650,283 +624,229 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Form Modal (Add/Edit) */}
-      {isFormModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slideUp">
-            <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950/20">
-              <h3 className="text-xl font-bold text-white flex items-center">
-                <div className="p-2 bg-indigo-500/10 rounded-lg mr-3 text-indigo-400">
-                  {modalMode === 'add' ? <Plus size={20} /> : <Edit size={20} />}
-                </div>
-                {modalMode === 'add' ? 'Onboard New Staff Member' : `Update Profile: ${selectedEmployee?.name}`}
-              </h3>
-              <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                <X size={24} />
-              </button>
+      {/* MODALS RENDERED BELOW (UNCHANGED) */}
+      {/* Form Modal */}
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        title={modalMode === 'add' ? 'Register New Employee' : 'Edit Staff Profile'}
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setIsFormModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={(e) => handleSubmit(e as any)}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+              leftIcon={<CheckCircle size={18} />}
+            >
+              {modalMode === 'add' ? 'Confirm Registration' : 'Save Changes'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+              label="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              error={errors.name}
+              leftIcon={<User size={18} />}
+              placeholder="e.g. John Doe"
+            />
+
+            <Input
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              error={errors.email}
+              leftIcon={<Mail size={18} />}
+              placeholder="john@company.com"
+            />
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-2.5 text-slate-500" size={18} />
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl text-sm glass-input border-white/10"
+                >
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="HR">HR</option>
+                  <option value="MANAGER">MANAGER</option>
+                  <option value="EMPLOYEE">EMPLOYEE</option>
+                </select>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Full Name */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <User size={14} className="mr-1.5" /> Full Legal Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="e.g. John Doe"
-                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
-                      errors.name ? 'border-rose-500/50 focus:border-rose-500' : ''
-                    }`}
-                  />
-                  {errors.name && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.name}</p>}
-                </div>
-
-                {/* Email Address */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Mail size={14} className="mr-1.5" /> Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="j.doe@company.com"
-                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
-                      errors.email ? 'border-rose-500/50 focus:border-rose-500' : ''
-                    }`}
-                  />
-                  {errors.email && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.email}</p>}
-                </div>
-
-                {/* Temporary Password (only for Add) */}
-                {modalMode === 'add' && (
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                      <Shield size={14} className="mr-1.5" /> Portal Password
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      placeholder="Minimum 6 characters"
-                      className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
-                        errors.password ? 'border-rose-500/50 focus:border-rose-500' : ''
-                      }`}
-                    />
-                    {errors.password && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.password}</p>}
-                    <p className="text-[10px] text-slate-500 italic">User can change this after first login.</p>
-                  </div>
-                )}
-
-                {/* System Role */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Shield size={14} className="mr-1.5" /> Access Role
-                  </label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
-                  >
-                    <option value="EMPLOYEE">EMPLOYEE</option>
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="HR">HR</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
-                  {errors.role && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.role}</p>}
-                </div>
-
-                {/* Department */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Briefcase size={14} className="mr-1.5" /> Department Unit
-                  </label>
-                  <select
-                    name="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Product">Product</option>
-                    <option value="Design">Design</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="HR">HR</option>
-                    <option value="Finance">Finance</option>
-                    <option value="Operations">Operations</option>
-                  </select>
-                  {errors.department && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.department}</p>}
-                </div>
-
-                {/* Salary */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <DollarSign size={14} className="mr-1.5" /> Annual Salary ($)
-                  </label>
-                  <input
-                    type="number"
-                    name="salary"
-                    value={formData.salary}
-                    onChange={handleInputChange}
-                    placeholder="e.g. 85000"
-                    className={`w-full px-4 py-2.5 rounded-xl text-sm glass-input ${
-                      errors.salary ? 'border-rose-500/50 focus:border-rose-500' : ''
-                    }`}
-                  />
-                  {errors.salary && <p className="text-[10px] font-bold text-rose-400 mt-1">{errors.salary}</p>}
-                </div>
-
-                {/* Employment Status */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                    <Info size={14} className="mr-1.5" /> Account Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 rounded-xl text-sm glass-input"
-                  >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/5 flex items-center justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsFormModalOpen(false)}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-colors hover:bg-white/5"
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-2.5 text-slate-500" size={18} />
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl text-sm glass-input border-white/10"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-8 py-2.5 rounded-xl text-sm font-bold text-white glass-button flex items-center disabled:opacity-50"
-                >
-                  {(createMutation.isPending || updateMutation.isPending) && (
-                    <Loader2 size={16} className="animate-spin mr-2" />
-                  )}
-                  {modalMode === 'add' ? 'Execute Onboarding' : 'Save Profile Changes'}
-                </button>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Product">Product</option>
+                  <option value="Design">Design</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="HR">HR</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Operations">Operations</option>
+                </select>
               </div>
-            </form>
+            </div>
+
+            <Input
+              label="Salary (Annual USD)"
+              name="salary"
+              type="number"
+              value={formData.salary}
+              onChange={handleInputChange}
+              error={errors.salary}
+              leftIcon={<DollarSign size={18} />}
+              placeholder="75000"
+            />
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-xl text-sm glass-input border-white/10"
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Profile Detail View Modal */}
+          {modalMode === 'add' && (
+            <Input
+              label="Initial Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              error={errors.password}
+              helperText="Required for new employees to sign in initially."
+              placeholder="••••••••"
+            />
+          )}
+        </form>
+      </Modal>
+
+      {/* Profile Modal */}
       {isProfileModalOpen && selectedEmployee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-scaleIn">
-            <div className="h-32 bg-gradient-to-r from-indigo-600 to-violet-600 relative">
-              <button
-                onClick={() => setIsProfileModalOpen(false)}
-                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors"
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-slideUp">
+            {/* Profile Header Background */}
+            <div className="h-32 bg-gradient-to-r from-indigo-600 to-violet-700 relative">
+               <button 
+                onClick={() => setIsProfileModalOpen(false)} 
+                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-all"
               >
                 <X size={20} />
               </button>
-              <div className="absolute -bottom-12 left-8 p-1.5 bg-slate-900 rounded-2xl border border-white/10">
-                <div className="h-24 w-24 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
-                  {selectedEmployee.name.charAt(0)}
+            </div>
+            
+            <div className="px-8 pb-8">
+              {/* Avatar Overlap */}
+              <div className="relative -mt-12 mb-6">
+                <div className="h-24 w-24 rounded-3xl bg-slate-900 p-1.5 border border-white/10 shadow-2xl">
+                  <div className="h-full w-full rounded-2xl bg-indigo-500 flex items-center justify-center text-3xl font-black text-white">
+                    {selectedEmployee.name.charAt(0)}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-16 px-8 pb-8 space-y-8">
-              <div>
-                <div className="flex items-center justify-between">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-2 space-y-6">
                   <div>
-                    <h3 className="text-3xl font-black text-white tracking-tight">{selectedEmployee.name}</h3>
-                    <p className="text-indigo-400 font-bold flex items-center mt-1 uppercase tracking-widest text-xs">
-                      <Briefcase size={14} className="mr-1.5" /> {selectedEmployee.role} • {selectedEmployee.department}
+                    <h3 className="text-2xl font-black text-white tracking-tight">{selectedEmployee.name}</h3>
+                    <p className="text-slate-400 font-medium flex items-center mt-1">
+                      <Mail size={14} className="mr-2 text-indigo-400" />
+                      {selectedEmployee.email}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadgeStyle(selectedEmployee.status)}`}>
-                    {selectedEmployee.status}
-                  </span>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Contact Intelligence</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Department</p>
+                      <div className="flex items-center text-slate-100 font-semibold">
+                        <Briefcase size={16} className="mr-2 text-indigo-400" />
+                        {selectedEmployee.department}
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Annual Salary</p>
+                      <div className="flex items-center text-emerald-400 font-bold">
+                        <DollarSign size={16} className="mr-1" />
+                        {selectedEmployee.salary.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
-                    <div className="flex items-center text-slate-300 group cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
-                        <Mail size={16} />
-                      </div>
-                      <span className="text-sm font-medium">{selectedEmployee.email}</span>
-                    </div>
-                    <div className="flex items-center text-slate-300 group cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
-                        <Phone size={16} />
-                      </div>
-                      <span className="text-sm font-medium">+1 (555) 012-3456</span>
-                    </div>
-                    <div className="flex items-center text-slate-300 group cursor-pointer">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all">
-                        <MapPin size={16} />
-                      </div>
-                      <span className="text-sm font-medium">San Francisco, CA HQ</span>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                      <Info size={14} className="mr-2" />
+                      Operational Overview
+                    </h4>
+                    <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-xs text-slate-400 leading-relaxed">
+                      This employee is currently <span className="text-indigo-300 font-bold underline underline-offset-4">{selectedEmployee.status.toLowerCase()}</span> within the system. 
+                      Access levels are restricted based on the <span className="text-white font-bold">{selectedEmployee.role}</span> role configuration. 
+                      Last profile reconciliation was performed recently.
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Employment Metrics</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center text-slate-300 group">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400">
-                        <DollarSign size={16} />
+                <div className="space-y-6">
+                  <div className="p-5 rounded-2xl bg-slate-950/40 border border-white/5 space-y-4">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Security & Role</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">System Role</span>
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${getRoleBadgeStyle(selectedEmployee.role)}`}>
+                          {selectedEmployee.role}
+                        </span>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Annual Remuneration</p>
-                        <span className="text-sm font-bold text-white">${selectedEmployee.salary.toLocaleString()} USD</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-slate-300 group">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mr-3 text-slate-400">
-                        <Calendar size={16} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Employment Since</p>
-                        <span className="text-sm font-bold text-white">January 12, 2023</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-400">Status</span>
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border ${getStatusBadgeStyle(selectedEmployee.status)}`}>
+                          {selectedEmployee.status}
+                        </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="pt-8 border-t border-white/5 flex justify-end gap-3">
-                <button
-                  onClick={() => setIsProfileModalOpen(false)}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-all"
-                >
-                  Close Profile
-                </button>
-                {canModify && (
-                  <button
-                    onClick={() => {
-                      setIsProfileModalOpen(false);
-                      handleEditClick(selectedEmployee);
-                    }}
-                    className="px-6 py-2.5 rounded-xl text-sm font-bold text-white glass-button"
-                  >
-                    Edit Profile
-                  </button>
-                )}
+                  <div className="space-y-2">
+                    <button className="w-full py-2.5 rounded-xl text-xs font-bold bg-white text-slate-900 hover:bg-slate-200 transition-all flex items-center justify-center">
+                      <FileText size={14} className="mr-2" />
+                      Download Full Dossier
+                    </button>
+                    {canModify && (
+                      <button 
+                        onClick={() => { setIsProfileModalOpen(false); handleEditClick(selectedEmployee); }}
+                        className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
+                      >
+                        Modify Professional Details
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -934,35 +854,35 @@ export default function Employees() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md bg-slate-900 border border-rose-500/20 rounded-2xl shadow-2xl overflow-hidden p-6 text-center animate-slideUp">
-            <div className="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
-              <Trash2 size={28} />
-            </div>
-            <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
-            <p className="text-sm text-slate-400 mt-2">
-              Are you sure you want to remove this staff profile? This action is irreversible and will revoke all system access immediately.
-            </p>
-            <div className="mt-8 flex items-center justify-center space-x-3">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-6 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-colors"
-              >
-                Keep Profile
-              </button>
-              <button
-                onClick={confirmDelete}
-                disabled={isDeleting}
-                className="px-8 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 flex items-center"
-              >
-                {isDeleting && <Loader2 size={16} className="animate-spin mr-2" />}
-                Confirm Delete
-              </button>
-            </div>
+      <Modal
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        title="Confirm Deletion"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>
+              Keep Profile
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDelete}
+              isLoading={isDeleting}
+            >
+              Delete Permanently
+            </Button>
+          </>
+        }
+      >
+        <div className="text-center">
+          <div className="h-16 w-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={32} />
           </div>
+          <p className="text-sm text-slate-400">
+            Are you absolutely sure you want to remove this employee? This action is irreversible and will delete all associated records.
+          </p>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
