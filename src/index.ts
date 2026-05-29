@@ -950,6 +950,92 @@ app.post('/api/events', authenticateToken, authorizeRoles('ADMIN'), async (req: 
   }
 });
 
+// Dashboard Telemetry API
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      activeEmployeesCount,
+      outstandingLeaves,
+      totalEvents,
+      todayAttendanceGroup,
+      recentActivities,
+      upcomingEvents
+    ] = await prisma.$transaction([
+      prisma.employee.count({
+        where: {
+          status: {
+            in: ['ACTIVE', 'Active', 'active']
+          }
+        }
+      }),
+      prisma.leave.count({
+        where: {
+          status: {
+            in: ['PENDING', 'pending', 'Pending']
+          }
+        }
+      }),
+      prisma.event.count(),
+      prisma.attendance.findMany({
+        where: {
+          checkIn: {
+            gte: todayStart
+          }
+        },
+        select: {
+          employeeId: true
+        }
+      }),
+      prisma.activity.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 10
+      }),
+      prisma.event.findMany({
+        where: {
+          date: {
+            gte: todayStart
+          }
+        },
+        orderBy: {
+          date: 'asc'
+        },
+        take: 10
+      })
+    ]);
+
+    const uniquePresentTodayCount = new Set(todayAttendanceGroup.map(a => a.employeeId)).size;
+    const presentRateToday = activeEmployeesCount > 0
+      ? Math.round((uniquePresentTodayCount / activeEmployeesCount) * 10000) / 100
+      : 0;
+
+    res.json({
+      activeEmployeesCount,
+      active_employees_count: activeEmployeesCount,
+      presentRateToday,
+      present_rate_today: presentRateToday,
+      outstandingLeaves,
+      outstanding_leaves: outstandingLeaves,
+      totalEvents,
+      total_events: totalEvents,
+      recentActivities,
+      recent_activities: recentActivities,
+      recentActivityRecords: recentActivities,
+      recent_activity_records: recentActivities,
+      upcomingEvents,
+      upcoming_events: upcomingEvents,
+      upcomingCalendarEvents: upcomingEvents,
+      upcoming_calendar_events: upcomingEvents
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`HRMS Backend running on http://localhost:${PORT}`);
